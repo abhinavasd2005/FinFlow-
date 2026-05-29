@@ -9,6 +9,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.finflow.exception.FraudAlertNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -145,5 +146,12 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
+    }
+    @ExceptionHandler(FraudAlertNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleFraudAlertNotFound(
+            FraudAlertNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 }

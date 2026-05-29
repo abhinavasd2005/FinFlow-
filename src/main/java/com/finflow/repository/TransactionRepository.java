@@ -60,5 +60,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             WHERE t.fromWallet.id = :walletId
               AND t.status = com.finflow.enums.TransactionStatus.COMPLETED
             """)
-    Double avgTransactionAmount(@Param("walletId") Long walletId);
+    BigDecimal avgTransactionAmount(@Param("walletId") Long walletId);
 }

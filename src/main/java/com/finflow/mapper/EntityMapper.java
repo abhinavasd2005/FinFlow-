@@ -6,6 +6,8 @@ import com.finflow.dto.response.WalletResponse;
 import com.finflow.entity.Transaction;
 import com.finflow.entity.User;
 import com.finflow.entity.Wallet;
+import com.finflow.dto.response.FraudAlertResponse;
+import com.finflow.entity.FraudAlert;
 
 public final class EntityMapper {
 
@@ -59,5 +61,41 @@ public final class EntityMapper {
                 transaction.getFraudScore(),
                 transaction.getCreatedAt()
         );
+    }
+    public static FraudAlertResponse toFraudAlertResponse(FraudAlert fraudAlert) {
+
+        FraudAlertResponse response = new FraudAlertResponse();
+
+        response.setId(fraudAlert.getId());
+
+        response.setTransactionId(
+                fraudAlert.getTransaction().getId()
+        );
+
+        response.setTransactionReference(
+                fraudAlert.getTransaction().getReferenceNumber()
+        );
+
+        response.setFraudScore(
+                fraudAlert.getFraudScore()
+        );
+
+        response.setAlertStatus(
+                fraudAlert.getStatus().name()
+        );
+
+        response.setTriggeredRules(
+                fraudAlert.getTriggeredRules()
+        );
+
+        response.setNotes(
+                fraudAlert.getNotes()
+        );
+
+        response.setCreatedAt(
+                fraudAlert.getCreatedAt()
+        );
+
+        return response;
     }
 }
