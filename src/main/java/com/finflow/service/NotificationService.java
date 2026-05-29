@@ -11,9 +11,9 @@ public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
-    @Async
+    @Async("notificationExecutor")
     public void send(Transaction transaction) {
-        log.info("Notification sent for transaction {} with status {} and amount {}",
+        log.info("[NOTIFICATION] Transaction {} | Status: {} | Amount: {}",
                 transaction.getId(),
                 transaction.getStatus(),
                 transaction.getAmount());

@@ -11,8 +11,8 @@ public class FraudDetectionService {
 
     private static final Logger log = LoggerFactory.getLogger(FraudDetectionService.class);
 
-    @Async
+    @Async("fraudExecutor")
     public void analyze(Transaction transaction) {
-        log.info("Fraud analysis started for transaction {}", transaction.getId());
+        log.info("[FRAUD CHECK] Analyzing transaction: {}", transaction.getId());
     }
 }

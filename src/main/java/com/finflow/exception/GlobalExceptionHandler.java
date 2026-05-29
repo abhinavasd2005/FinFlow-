@@ -2,6 +2,7 @@ package com.finflow.exception;
 
 import com.finflow.dto.response.TransferResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -75,6 +76,22 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(WalletBusyException.class)
+    public ResponseEntity<Map<String, Object>> handleWalletBusy(
+            WalletBusyException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(FrozenWalletException.class)
+    public ResponseEntity<Map<String, Object>> handleFrozenWallet(
+            FrozenWalletException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.LOCKED, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(
             InvalidRequestException ex,
@@ -97,6 +114,14 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleOptimisticLocking(
+            OptimisticLockingFailureException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.CONFLICT, "Concurrent update detected. Please retry.", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
