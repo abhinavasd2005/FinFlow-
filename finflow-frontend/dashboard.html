@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FinFlow — Dashboard</title>
+    <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container navbar-inner">
+        <a href="dashboard.html" class="navbar-brand">Fin<span>Flow</span></a>
+        <div class="navbar-user">
+            <span class="navbar-username" id="nav-username"></span>
+            <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="dashboard-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p id="greeting"></p>
+        </div>
+        <button class="btn btn-primary btn-sm"
+                onclick="document.getElementById('create-wallet-modal').classList.add('show')">
+            + New Wallet
+        </button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Balance</div>
+            <div class="stat-value" id="total-balance">—</div>
+            <div class="stat-sub">across all wallets</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Wallets</div>
+            <div class="stat-value" id="wallet-count">—</div>
+            <div class="stat-sub">active accounts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Daily Limit</div>
+            <div class="stat-value" id="total-limit">—</div>
+            <div class="stat-sub">combined limit</div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h2>My Wallets</h2>
+    </div>
+
+    <div id="alert-dashboard" class="alert"></div>
+    <div id="wallets-loading" style="text-align:center;padding:2rem;color:var(--text-muted)">
+        <span class="spinner"></span>
+    </div>
+    <div class="wallets-grid" id="wallets-grid"></div>
+</div>
+
+<div class="modal-overlay" id="create-wallet-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>New Wallet</h2>
+            <button class="modal-close"
+                    onclick="document.getElementById('create-wallet-modal').classList.remove('show')">✕</button>
+        </div>
+
+        <div id="create-wallet-alert" class="alert"></div>
+
+        <div class="form-group">
+            <label>Wallet Name</label>
+            <input type="text" id="wallet-name" placeholder="e.g. Savings, Primary"/>
+        </div>
+
+        <div class="form-group">
+            <label>Initial Balance ($)</label>
+            <input type="number" id="wallet-balance" placeholder="0.00" min="0" step="0.01"/>
+        </div>
+
+        <div class="form-group">
+            <label>Daily Limit ($)</label>
+            <input type="number" id="wallet-limit" placeholder="100000.00" step="0.01"/>
+        </div>
+
+        <button class="btn btn-primary" onclick="createWallet()">
+            <span id="create-wallet-btn-text">Create Wallet</span>
+        </button>
+    </div>
+</div>
+
+<script src="js/wallet.js"></script>
+</body>
+</html>

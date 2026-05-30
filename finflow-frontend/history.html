@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FinFlow — Transaction History</title>
+    <link rel="stylesheet" href="css/style.css"/>
+
+    <style>
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .history-table th {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .history-table tbody tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .txn-amount.credit {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .txn-amount.debit {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .statement-box {
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .statement-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .statement-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="container navbar-inner">
+        <a href="dashboard.html" class="navbar-brand">
+            Fin<span>Flow</span>
+        </a>
+
+        <div class="navbar-user">
+            <span class="navbar-username" id="nav-username"></span>
+
+            <a href="dashboard.html" class="btn btn-secondary btn-sm">
+                Dashboard
+            </a>
+
+            <a href="transfer.html" class="btn btn-secondary btn-sm">
+                Transfer
+            </a>
+
+            <button class="btn btn-danger btn-sm" onclick="logout()">
+                Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="dashboard-header">
+        <div>
+            <h1>Transaction History</h1>
+            <p>View transfers, statements and fraud activity</p>
+        </div>
+    </div>
+
+    <div style="
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  ">
+
+        <div class="filter-grid">
+
+            <div class="form-group">
+                <label>Select Wallet</label>
+                <select id="wallet-select"></select>
+            </div>
+
+            <div class="form-group">
+                <label>From Date</label>
+                <input type="datetime-local" id="from-date"/>
+            </div>
+
+            <div class="form-group">
+                <label>To Date</label>
+                <input type="datetime-local" id="to-date"/>
+            </div>
+
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+
+            <button class="btn btn-primary" onclick="loadHistory()">
+                Apply Filter
+            </button>
+
+            <button class="btn btn-secondary" onclick="loadStatement()">
+                Load Statement
+            </button>
+
+        </div>
+
+        <div id="statement-box"
+             class="statement-box"
+             style="display:none">
+        </div>
+
+    </div>
+
+    <div style="
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow:hidden;
+  ">
+
+        <div style="
+      padding:1.25rem 1.5rem;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    ">
+            <h2>Transactions</h2>
+
+            <div id="txn-count"
+                 style="font-size:0.85rem;color:var(--text-muted)">
+            </div>
+        </div>
+
+        <div id="history-loading"
+             style="padding:2rem;text-align:center;color:var(--text-muted)">
+            <span class="spinner"></span>
+        </div>
+
+        <div class="table-wrapper">
+
+            <table class="history-table" id="history-table"
+                   style="display:none">
+
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Fraud</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody id="history-body"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="js/history.js"></script>
+
+</body>
+</html>

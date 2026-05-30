@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0"/>
+
+    <title>Fraud Management</title>
+
+    <link rel="stylesheet"
+          href="../css/style.css"/>
+
+    <style>
+
+        .fraud-table {
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        .fraud-table th,
+        .fraud-table td {
+            padding:1rem;
+            border-bottom:1px solid var(--border);
+            text-align:left;
+            font-size:0.9rem;
+        }
+
+        .fraud-table th {
+            color:var(--text-muted);
+            text-transform:uppercase;
+            font-size:0.75rem;
+        }
+
+        .fraud-table tbody tr:hover {
+            background:rgba(255,255,255,0.02);
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+    <div class="container navbar-inner">
+
+        <a href="admin-dashboard.html"
+           class="navbar-brand">
+
+            Fin<span>Flow</span>
+
+            <span class="badge badge-warning"
+                  style="margin-left:0.5rem">
+                ADMIN
+            </span>
+
+        </a>
+
+        <div class="navbar-user">
+
+            <span class="navbar-username"
+                  id="nav-username">
+            </span>
+
+            <a href="admin-dashboard.html"
+               class="btn btn-secondary btn-sm">
+                Dashboard
+            </a>
+
+            <button class="btn btn-danger btn-sm"
+                    onclick="logout()">
+                Logout
+            </button>
+
+        </div>
+
+    </div>
+
+</nav>
+
+<div class="container">
+
+    <div class="dashboard-header">
+
+        <div>
+
+            <h1>Fraud Management</h1>
+
+            <p>
+                Review suspicious transactions
+            </p>
+
+        </div>
+
+    </div>
+
+    <div style="
+        background:var(--bg-card);
+        border:1px solid var(--border);
+        border-radius:var(--radius);
+        padding:1.5rem;
+        margin-bottom:2rem;
+    ">
+
+        <h3 style="margin-bottom:1rem">
+            Manual Wallet Freeze
+        </h3>
+
+        <div style="
+            display:flex;
+            gap:1rem;
+            flex-wrap:wrap;
+        ">
+
+            <input type="number"
+                   id="wallet-id"
+                   placeholder="Wallet ID"
+                   style="flex:1"/>
+
+            <input type="text"
+                   id="freeze-reason"
+                   placeholder="Reason"
+                   style="flex:2"/>
+
+            <button class="btn btn-danger"
+                    style="width:auto"
+                    onclick="freezeWallet()">
+
+                Freeze
+
+            </button>
+
+            <button class="btn btn-secondary"
+                    style="width:auto"
+                    onclick="unfreezeWallet()">
+
+                Unfreeze
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <div style="
+        background:var(--bg-card);
+        border:1px solid var(--border);
+        border-radius:var(--radius);
+        overflow:hidden;
+    ">
+
+        <div style="
+            padding:1.25rem 1.5rem;
+            border-bottom:1px solid var(--border);
+        ">
+
+            <h2>Fraud Alerts</h2>
+
+        </div>
+
+        <div style="overflow-x:auto">
+
+            <table class="fraud-table">
+
+                <thead>
+
+                <tr>
+
+                    <th>ID</th>
+                    <th>Txn Ref</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Rules</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody id="fraud-body">
+
+                <tr>
+
+                    <td colspan="7"
+                        style="
+                            text-align:center;
+                            padding:2rem;
+                        ">
+
+                        <span class="spinner"></span>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="../js/admin.js"></script>
+
+</body>
+</html>

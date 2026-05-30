@@ -8,15 +8,24 @@ public class UserResponse {
     private String username;
     private String email;
     private LocalDateTime createdAt;
+    private String role;
 
     public UserResponse() {
     }
 
-    public UserResponse(Long id, String username, String email, LocalDateTime createdAt) {
+    public UserResponse(Long id, String username, String email, LocalDateTime createdAt,String role) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.createdAt = createdAt;
+        this.role = role;
+    }
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public Long getId() {

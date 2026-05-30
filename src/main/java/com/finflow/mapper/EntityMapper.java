@@ -23,7 +23,8 @@ public final class EntityMapper {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getRole().name()
         );
     }
 

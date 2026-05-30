@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FinFlow — Transfer Receipt</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        .slip-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .slip-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 460px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .slip-header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .slip-status-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin: 0 auto 1rem;
+        }
+
+        .slip-status-icon.success {
+            background: rgba(34,197,94,0.15);
+            border: 2px solid rgba(34,197,94,0.3);
+        }
+
+        .slip-status-icon.failed {
+            background: rgba(239,68,68,0.15);
+            border: 2px solid rgba(239,68,68,0.3);
+        }
+
+        .slip-amount {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin: 0.5rem 0 0.25rem;
+        }
+
+        .slip-amount.success { color: var(--success); }
+        .slip-amount.failed { color: var(--danger); }
+
+        .slip-body { padding: 1.5rem 2rem; }
+
+        .slip-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--border-light);
+            gap: 1rem;
+        }
+
+        .slip-row:last-child { border-bottom: none; }
+
+        .slip-row .slip-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .slip-row .slip-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .slip-footer {
+            padding: 1.25rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .slip-divider {
+            border: none;
+            border-top: 2px dashed var(--border);
+            margin: 0.5rem 0;
+        }
+
+        @media print {
+            .navbar, .slip-footer { display: none !important; }
+            body { background: #fff; color: #000; }
+            .slip-card { border: none; box-shadow: none; background: #fff; }
+            .slip-label { color: #666; }
+            .slip-row { border-color: #eee; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar" id="slip-navbar">
+    <div class="container navbar-inner">
+        <a href="dashboard.html" class="navbar-brand">Fin<span>Flow</span></a>
+        <div class="navbar-user">
+            <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+            <a href="transfer.html" class="btn btn-secondary btn-sm">New Transfer</a>
+        </div>
+    </div>
+</nav>
+
+<div class="slip-wrapper">
+    <div id="slip-loading" style="text-align:center;color:var(--text-muted)">
+        <span class="spinner"></span>
+        <p style="margin-top:0.75rem">Loading receipt...</p>
+    </div>
+
+    <div class="slip-card" id="slip-card" style="display:none">
+        <div class="slip-header">
+            <div class="slip-status-icon" id="slip-icon"></div>
+            <div style="font-size:0.85rem;color:var(--text-muted)">Transfer Receipt</div>
+            <div class="slip-amount" id="slip-amount"></div>
+            <div id="slip-failure-reason" style="font-size:0.85rem;color:var(--danger);margin-top:0.25rem"></div>
+        </div>
+
+        <div class="slip-body">
+            <div class="slip-row">
+                <span class="slip-label">Status</span>
+                <span class="slip-value" id="slip-status-badge"></span>
+            </div>
+
+            <div class="slip-row">
+                <span class="slip-label">Reference</span>
+                <span class="slip-value" style="font-family:monospace;font-size:0.78rem" id="slip-ref"></span>
+            </div>
+
+            <div class="slip-row">
+                <span class="slip-label">Date & Time</span>
+                <span class="slip-value" id="slip-date"></span>
+            </div>
+
+            <hr class="slip-divider"/>
+
+            <div class="slip-row">
+                <span class="slip-label">From</span>
+                <div style="text-align:right">
+                    <div class="slip-value" id="slip-from-name"></div>
+                    <div style="font-size:0.76rem;color:var(--text-muted);font-family:monospace" id="slip-from-number"></div>
+                    <div style="font-size:0.76rem;color:var(--text-muted)" id="slip-from-user"></div>
+                </div>
+            </div>
+
+            <div class="slip-row">
+                <span class="slip-label">To</span>
+                <div style="text-align:right">
+                    <div class="slip-value" id="slip-to-name"></div>
+                    <div style="font-size:0.76rem;color:var(--text-muted);font-family:monospace" id="slip-to-number"></div>
+                    <div style="font-size:0.76rem;color:var(--text-muted)" id="slip-to-user"></div>
+                </div>
+            </div>
+
+            <hr class="slip-divider"/>
+
+            <div class="slip-row">
+                <span class="slip-label">Description</span>
+                <span class="slip-value" id="slip-desc"></span>
+            </div>
+
+            <div class="slip-row">
+                <span class="slip-label">Balance After</span>
+                <span class="slip-value" id="slip-balance-after" style="font-weight:700"></span>
+            </div>
+
+            <div class="slip-row" id="slip-fraud-row" style="display:none">
+                <span class="slip-label">Fraud Score</span>
+                <span class="slip-value" id="slip-fraud-score"></span>
+            </div>
+        </div>
+
+        <div class="slip-footer">
+            <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+            <a href="transfer.html" class="btn btn-secondary">New Transfer</a>
+            <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script src="js/slip.js"></script>
+</body>
+</html>

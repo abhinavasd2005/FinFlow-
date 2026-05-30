@@ -20,6 +20,7 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     Optional<Wallet> findByIdAndUserUsername(Long id, String username);
 
+
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT w FROM Wallet w WHERE w.id = :id")
     Optional<Wallet> findByIdWithOptimisticLock(@Param("id") Long id);

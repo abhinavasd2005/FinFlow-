@@ -11,6 +11,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.finflow.repository.WalletRepository;
+import java.util.Map;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,9 +23,11 @@ import java.util.List;
 public class WalletController {
 
     private final WalletService walletService;
+    private final WalletRepository walletRepository;
 
-    public WalletController(WalletService walletService) {
+    public WalletController(WalletService walletService, WalletRepository walletRepository) {
         this.walletService = walletService;
+        this.walletRepository = walletRepository;
     }
 
     @PostMapping
@@ -60,5 +64,16 @@ public class WalletController {
             @RequestParam @Positive BigDecimal limit,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(walletService.setDailyLimit(id, limit, userDetails.getUsername()));
+    }
+    @GetMapping("/lookup")
+    public ResponseEntity<?> lookupByNumber(@RequestParam String walletNumber) {
+        return walletRepository.findByWalletNumber(walletNumber)
+                .map(w -> ResponseEntity.ok(Map.of(
+                        "id", w.getId(),
+                        "walletName", w.getWalletName(),
+                        "walletNumber", w.getWalletNumber(),
+                        "ownerUsername", w.getUser().getUsername()
+                )))
+                .orElse(ResponseEntity.notFound().build());
     }
 }

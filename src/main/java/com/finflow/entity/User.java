@@ -2,11 +2,14 @@ package com.finflow.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.finflow.enums.Role;
 
 @Entity
 @Table(name = "users")
 public class User {
-
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,4 +46,11 @@ public class User {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }

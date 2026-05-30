@@ -14,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.finflow.enums.Role;
 
 import java.time.LocalDateTime;
 
@@ -39,6 +40,17 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        return registerInternal(request, Role.USER);
+    }
+    @Transactional
+    public AuthResponse registerAdmin(RegisterRequest request) {
+        return registerInternal(request, Role.ADMIN);
+    }
+    private AuthResponse registerInternal(
+            RegisterRequest request,
+            Role role
+    ) {
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ConflictException("Username already exists");
         }
@@ -51,13 +63,19 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(role);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
         User savedUser = userRepository.save(user);
-        String token = jwtUtil.generateToken(savedUser.getUsername());
 
-        return new AuthResponse(token, EntityMapper.toUserResponse(savedUser));
+        String token =
+                jwtUtil.generateToken(savedUser.getUsername());
+
+        return new AuthResponse(
+                token,
+                EntityMapper.toUserResponse(savedUser)
+        );
     }
 
     public AuthResponse login(LoginRequest request) {

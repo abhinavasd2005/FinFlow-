@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FinFlow — Login</title>
+    <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <h1>Fin<span>Flow</span></h1>
+            <p>Secure payment system</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+            <button class="tab-btn" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div id="login-form">
+            <div id="login-alert" class="alert"></div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="login-username" placeholder="Enter username"/>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Enter password"/>
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">
+                <span id="login-btn-text">Sign In</span>
+            </button>
+        </div>
+
+        <div id="register-form" style="display:none">
+            <div id="register-alert" class="alert"></div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="reg-username" placeholder="Choose a username"/>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="reg-email" placeholder="Enter email"/>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="reg-password" placeholder="Min 6 characters"/>
+            </div>
+            <button class="btn btn-primary" onclick="handleRegister()">
+                <span id="reg-btn-text">Create Account</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+</body>
+</html>

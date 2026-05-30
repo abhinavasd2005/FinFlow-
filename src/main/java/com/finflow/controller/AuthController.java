@@ -28,4 +28,17 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+    @PostMapping("/register/admin")
+    public ResponseEntity<AuthResponse> registerAdmin(
+            @RequestBody RegisterRequest request,
+            @RequestParam String adminSecret
+    ) {
+
+        if (!"finflow-admin-secret".equals(adminSecret)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.status(201)
+                .body(authService.registerAdmin(request));
+    }
 }
