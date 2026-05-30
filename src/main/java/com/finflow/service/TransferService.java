@@ -183,7 +183,6 @@ public class TransferService {
                     null
             );
             transaction.setTransactionType(TransactionType.TRANSFER);
-            transaction.setReferenceNumber(generateReferenceNumber());
 
             transactionRepository.saveAndFlush(transaction);
 

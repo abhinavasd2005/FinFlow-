@@ -154,4 +154,8 @@ public class GlobalExceptionHandler {
     ) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
 }
