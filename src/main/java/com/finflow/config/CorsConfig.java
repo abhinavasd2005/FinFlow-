@@ -15,7 +15,7 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "https://finflow-frontend-m169.onrender.com/",
+                "https://finflow-frontend-m169.onrender.com",
                 "http://localhost:5500",
                 "http://127.0.0.1:5500"
         ));
