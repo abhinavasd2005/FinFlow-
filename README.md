@@ -19,8 +19,13 @@ The project was built to demonstrate backend engineering depth — specifically 
 A minimal HTML/CSS/JavaScript frontend provides a working interface for users and a dedicated admin panel for fraud monitoring.
 
 ---
-## LIVE
-Backend: https://finflow-backendapp.onrender.com
+## 🔗 Live Demo
+
+| Service | URL |
+|---|---|
+| Frontend | https://finflow-frontend-m169.onrender.com |
+| Backend API | https://finflow-backendapp.onrender.com |
+
 
 ## Key Features
 
