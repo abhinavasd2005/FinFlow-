@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'https://finflow-backendapp.onrender.com/api';
 
 const token = sessionStorage.getItem('token');
 const username = sessionStorage.getItem('username');
