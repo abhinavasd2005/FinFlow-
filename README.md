@@ -348,6 +348,59 @@ Six JMeter test plans were executed. Screenshots of results are included in the 
 
 ---
 
+## 🚀 Deployment
+
+| Component | Platform | Details |
+|---|---|---|
+| Backend API | Render | Docker container, free tier, Singapore region |
+| Frontend | Render | Static site, global CDN |
+| Database | Railway | MySQL 8.0, Southeast Asia region |
+
+
+---
+
+## 🐳 Deployment Architecture & Techniques
+
+### Containerization with Docker
+The Spring Boot backend is fully containerized using Docker. Rather than deploying a raw JAR file, the entire application — including its Java runtime — is packaged into a portable container image that runs identically in any environment.
+
+### Multi-Stage Docker Build
+A multi-stage build pattern is used to keep the final image lean:
+
+```dockerfile
+# Stage 1 — Build: Maven + JDK compiles the source into a JAR
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+
+# Stage 2 — Run: Only the JRE is included, Maven is discarded
+FROM eclipse-temurin:17-jre
+```
+
+**Why this matters:** The build stage uses a full Maven + JDK image (~500MB). The runtime stage uses only a JRE (~200MB). Maven is not needed at runtime so it is discarded — resulting in a smaller, faster, more secure production image. This is an industry best practice for Java deployments.
+
+### Environment-Based Configuration
+All sensitive credentials — database host, port, username, password, JWT secret — are injected at runtime via environment variables. No secrets are hardcoded or committed to GitHub.
+
+```properties
+spring.datasource.url=jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}
+spring.datasource.username=${MYSQLUSER}
+spring.datasource.password=${MYSQLPASSWORD}
+jwt.secret=${JWT_SECRET}
+```
+
+This follows the **12-Factor App** methodology — a widely adopted standard for building production-grade cloud applications.
+
+### CI/CD via GitHub Integration
+Both Render services are connected directly to the GitHub repository. Every `git push` to the `main` branch automatically triggers a new deployment — no manual steps required. This is a basic but real **continuous deployment** pipeline.
+
+### Static Site Deployment
+The HTML/CSS/JS frontend requires no build step and is deployed as a static site on Render's global CDN — meaning it is served from edge locations worldwide for fast load times regardless of the user's location.
+
+### Cross-Origin Resource Sharing (CORS)
+Since the frontend and backend run on different domains, CORS is configured in Spring Boot to explicitly allow requests from the frontend origin — a standard security requirement for any separated frontend/backend architecture.
+
+### Database as a Service (DBaaS)
+MySQL is provisioned on Railway as a managed database service. The backend connects over a public TCP proxy (`zephyr.proxy.rlwy.net`) — Railway's public networking endpoint — since the backend and database run on different cloud platforms and cannot communicate over a private network.
+
 ## API Endpoints
 
 ### Auth
