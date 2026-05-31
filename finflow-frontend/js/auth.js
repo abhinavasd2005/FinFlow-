@@ -123,7 +123,7 @@ async function handleLogin() {
 
         const res =
             await fetch(
-                `${API}/auth/login`,
+                `${API_BASE}/auth/login`,
                 {
                     method: 'POST',
                     headers: {
@@ -246,7 +246,7 @@ async function handleRegister() {
 
         const res =
             await fetch(
-                `${API}/auth/register`,
+                `${API_BASE}/auth/register`,
                 {
                     method: 'POST',
                     headers: {
