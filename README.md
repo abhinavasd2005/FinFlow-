@@ -530,44 +530,58 @@ finflow-frontend/
 
 ---
 
-## Setup Instructions
+## ⚙️ Setup Instructions
 
 ### Prerequisites
 - Java 17
 - MySQL 8.0
 - Maven
+- Docker (optional — for containerized run)
 
-### Backend
-```bash
+### Backend (Local)
+
 # 1. Clone the repository
-git clone https://github.com/yourusername/finflow.git
-cd finflow
+git clone https://github.com/abhinavasd2005/FinFlow-.git
+cd FinFlow-
 
-# 2. Create the database
-mysql -u root -p
+# 2. Create the database in MySQL
 CREATE DATABASE finflow;
 
-# 3. Update application.properties
+# 3. Update application.properties with your local values
 spring.datasource.url=jdbc:mysql://localhost:3306/finflow
 spring.datasource.username=your_username
 spring.datasource.password=your_password
+jwt.secret=any_long_secret_key_here
+server.port=8080
 
 # 4. Run the application
 mvn spring-boot:run
 # Server starts at http://localhost:8080
 # Hibernate auto-creates all tables on first run
-```
+
+### Backend (Docker)
+
+docker build -t finflow .
+docker run -p 8080:8080 \
+  -e MYSQLHOST=your_host \
+  -e MYSQLPORT=3306 \
+  -e MYSQLDATABASE=finflow \
+  -e MYSQLUSER=root \
+  -e MYSQLPASSWORD=your_password \
+  -e JWT_SECRET=your_secret \
+  finflow
 
 ### Frontend
-```bash
-# Open directly in browser (no build step needed)
-# Or use VS Code Live Server extension
 
+# Open directly in browser
+# Or use VS Code Live Server extension
 open finflow-frontend/index.html
-```
+
+# For production frontend point to live backend:
+# Change API_BASE in all JS files to your backend URL
 
 ### Create Admin Account
-```bash
+
 curl -X POST "http://localhost:8080/api/auth/register/admin?adminSecret=finflow-admin-secret" \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","email":"admin@finflow.com","password":"admin123"}'
