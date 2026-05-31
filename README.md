@@ -387,10 +387,16 @@ spring.datasource.password=${MYSQLPASSWORD}
 jwt.secret=${JWT_SECRET}
 ```
 
-This follows the **12-Factor App** methodology — a widely adopted standard for building production-grade cloud applications.
+The application follows several *12-Factor App principles* — 
+environment-based configuration, explicit dependency declaration 
+via Maven, stateless processes with JWT, and separated build/run 
+stages via Docker multi-stage builds.
 
-### CI/CD via GitHub Integration
-Both Render services are connected directly to the GitHub repository. Every `git push` to the `main` branch automatically triggers a new deployment — no manual steps required. This is a basic but real **continuous deployment** pipeline.
+### Automated Deployment (CD)
+Both Render services are connected directly to the GitHub repository. 
+Every `git push` to the `main` branch automatically triggers a new 
+deployment on Render — no manual steps required. This is a basic 
+continuous deployment setup.
 
 ### Static Site Deployment
 The HTML/CSS/JS frontend requires no build step and is deployed as a static site on Render's global CDN — meaning it is served from edge locations worldwide for fast load times regardless of the user's location.
@@ -399,7 +405,7 @@ The HTML/CSS/JS frontend requires no build step and is deployed as a static site
 Since the frontend and backend run on different domains, CORS is configured in Spring Boot to explicitly allow requests from the frontend origin — a standard security requirement for any separated frontend/backend architecture.
 
 ### Database as a Service (DBaaS)
-MySQL is provisioned on Railway as a managed database service. The backend connects over a public TCP proxy (`zephyr.proxy.rlwy.net`) — Railway's public networking endpoint — since the backend and database run on different cloud platforms and cannot communicate over a private network.
+MySQL is provisioned on Railway as a managed database service. The backend connects over a public TCP proxy, Railway's public networking endpoint — since the backend and database run on different cloud platforms and cannot communicate over a private network.
 
 ## API Endpoints
 
