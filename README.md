@@ -99,6 +99,15 @@ A minimal HTML/CSS/JavaScript frontend provides a working interface for users an
 | Postman | Manual API testing |
 | Apache JMeter | Concurrency and load testing |
 
+### 🚀 Deployment
+
+| Technology | Purpose |
+|---|---|
+| Docker | Containerization — multi-stage build |
+| Render | Backend hosting (Docker) + Frontend hosting (Static Site) |
+| Railway | MySQL 8.0 managed database (DBaaS) |
+| GitHub | Version control + automated CD trigger |
+
 ---
 
 ## System Architecture
@@ -347,15 +356,6 @@ Six JMeter test plans were executed. Screenshots of results are included in the 
 | Simple Load Test | High throughput baseline — transactions per second | Measured TPS recorded |
 
 ---
-
-## 🚀 Deployment
-
-| Component | Platform | Details |
-|---|---|---|
-| Backend API | Render | Docker container, free tier, Singapore region |
-| Frontend | Render | Static site, global CDN |
-| Database | Railway | MySQL 8.0, Southeast Asia region |
-
 
 ---
 
