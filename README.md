@@ -20,7 +20,7 @@ A minimal HTML/CSS/JavaScript frontend provides a working interface for users an
 
 ---
 ## LIVE
-Backend: https://finflow-backendapp.onrender.com/
+Backend: https://finflow-backendapp.onrender.com
 
 ## Key Features
 
