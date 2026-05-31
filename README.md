@@ -528,8 +528,6 @@ finflow-frontend/
     └── admin.js
 ```
 
----
-
 ## ⚙️ Setup Instructions
 
 ### Prerequisites
@@ -538,8 +536,11 @@ finflow-frontend/
 - Maven
 - Docker (optional — for containerized run)
 
+---
+
 ### Backend (Local)
 
+```bash
 # 1. Clone the repository
 git clone https://github.com/abhinavasd2005/FinFlow-.git
 cd FinFlow-
@@ -558,9 +559,13 @@ server.port=8080
 mvn spring-boot:run
 # Server starts at http://localhost:8080
 # Hibernate auto-creates all tables on first run
+```
+
+---
 
 ### Backend (Docker)
 
+```bash
 docker build -t finflow .
 docker run -p 8080:8080 \
   -e MYSQLHOST=your_host \
@@ -570,24 +575,29 @@ docker run -p 8080:8080 \
   -e MYSQLPASSWORD=your_password \
   -e JWT_SECRET=your_secret \
   finflow
+```
+
+---
 
 ### Frontend
 
+```bash
 # Open directly in browser
 # Or use VS Code Live Server extension
 open finflow-frontend/index.html
 
-# For production frontend point to live backend:
-# Change API_BASE in all JS files to your backend URL
+# For production — change API_BASE in all JS files to your backend URL
+```
+
+---
 
 ### Create Admin Account
 
+```bash
 curl -X POST "http://localhost:8080/api/auth/register/admin?adminSecret=finflow-admin-secret" \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","email":"admin@finflow.com","password":"admin123"}'
 ```
-
----
 
 ## Future Improvements
 
