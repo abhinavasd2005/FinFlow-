@@ -150,7 +150,7 @@ function renderTransactions(txns) {
         const row = document.createElement('tr');
 
         const isDebit =
-            txn.transactionType === 'TRANSFER';
+            txn.type === 'TRANSFER';
 
         const fraudBadge =
             txn.fraudScore > 70
@@ -173,7 +173,7 @@ function renderTransactions(txns) {
             </td>
 
             <td>
-                ${txn.transactionType}
+                ${txn.type}
             </td>
 
             <td class="
