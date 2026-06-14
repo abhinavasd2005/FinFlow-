@@ -6,7 +6,14 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.2-6DB33F?style=flat&logo=springboot&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL_8.0-4479A1?style=flat&logo=mysql&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=flat&logo=jsonwebtokens&logoColor=white)
-![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat&logo=apachemaven&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat&logo=apachemaven&logoColor=white) 
+![JMeter](https://img.shields.io/badge/Apache_JMeter-D22128?style=flat&logo=apachejmeter&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) 
+![Render](https://img.shields.io/badge/Render-46E3B7?style=flat&logo=render&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=flat&logo=railway&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=flat&logo=postman&logoColor=white) 
+
+
 
 ---
 
@@ -19,8 +26,13 @@ The project was built to demonstrate backend engineering depth — specifically 
 A minimal HTML/CSS/JavaScript frontend provides a working interface for users and a dedicated admin panel for fraud monitoring.
 
 ---
-## LIVE
-Backend: https://finflow-backendapp.onrender.com
+## 🔗 Live Demo
+
+| Service | URL |
+|---|---|
+| Frontend | https://finflow-frontend-m169.onrender.com |
+| Backend API | https://finflow-backendapp.onrender.com |
+
 
 ## Key Features
 
@@ -93,6 +105,15 @@ Backend: https://finflow-backendapp.onrender.com
 |---|---|
 | Postman | Manual API testing |
 | Apache JMeter | Concurrency and load testing |
+
+### 🚀 Deployment
+
+| Technology | Purpose |
+|---|---|
+| Docker | Containerization — multi-stage build |
+| Render | Backend hosting (Docker) + Frontend hosting (Static Site) |
+| Railway | MySQL 8.0 managed database (DBaaS) |
+| GitHub | Version control + automated CD trigger |
 
 ---
 
@@ -343,6 +364,56 @@ Six JMeter test plans were executed. Screenshots of results are included in the 
 
 ---
 
+---
+
+## 🐳 Deployment Architecture & Techniques
+
+### Containerization with Docker
+The Spring Boot backend is fully containerized using Docker. Rather than deploying a raw JAR file, the entire application — including its Java runtime — is packaged into a portable container image that runs identically in any environment.
+
+### Multi-Stage Docker Build
+A multi-stage build pattern is used to keep the final image lean:
+
+```dockerfile
+# Stage 1 — Build: Maven + JDK compiles the source into a JAR
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+
+# Stage 2 — Run: Only the JRE is included, Maven is discarded
+FROM eclipse-temurin:17-jre
+```
+
+**Why this matters:** The build stage uses a full Maven + JDK image (~500MB). The runtime stage uses only a JRE (~200MB). Maven is not needed at runtime so it is discarded — resulting in a smaller, faster, more secure production image. This is an industry best practice for Java deployments.
+
+### Environment-Based Configuration
+All sensitive credentials — database host, port, username, password, JWT secret — are injected at runtime via environment variables. No secrets are hardcoded or committed to GitHub.
+
+```properties
+spring.datasource.url=jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}
+spring.datasource.username=${MYSQLUSER}
+spring.datasource.password=${MYSQLPASSWORD}
+jwt.secret=${JWT_SECRET}
+```
+
+The application follows several *12-Factor App principles* — 
+environment-based configuration, explicit dependency declaration 
+via Maven, stateless processes with JWT, and separated build/run 
+stages via Docker multi-stage builds.
+
+### Automated Deployment (CD)
+Both Render services are connected directly to the GitHub repository. 
+Every `git push` to the `main` branch automatically triggers a new 
+deployment on Render — no manual steps required. This is a basic 
+continuous deployment setup.
+
+### Static Site Deployment
+The HTML/CSS/JS frontend requires no build step and is deployed as a static site on Render's global CDN — meaning it is served from edge locations worldwide for fast load times regardless of the user's location.
+
+### Cross-Origin Resource Sharing (CORS)
+Since the frontend and backend run on different domains, CORS is configured in Spring Boot to explicitly allow requests from the frontend origin — a standard security requirement for any separated frontend/backend architecture.
+
+### Database as a Service (DBaaS)
+MySQL is provisioned on Railway as a managed database service. The backend connects over a public TCP proxy, Railway's public networking endpoint — since the backend and database run on different cloud platforms and cannot communicate over a private network.
+
 ## API Endpoints
 
 ### Auth
@@ -464,29 +535,32 @@ finflow-frontend/
     └── admin.js
 ```
 
----
-
-## Setup Instructions
+## ⚙️ Setup Instructions
 
 ### Prerequisites
 - Java 17
 - MySQL 8.0
 - Maven
+- Docker (optional — for containerized run)
 
-### Backend
+---
+
+### Backend (Local)
+
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/finflow.git
-cd finflow
+git clone https://github.com/abhinavasd2005/FinFlow-.git
+cd FinFlow-
 
-# 2. Create the database
-mysql -u root -p
+# 2. Create the database in MySQL
 CREATE DATABASE finflow;
 
-# 3. Update application.properties
+# 3. Update application.properties with your local values
 spring.datasource.url=jdbc:mysql://localhost:3306/finflow
 spring.datasource.username=your_username
 spring.datasource.password=your_password
+jwt.secret=any_long_secret_key_here
+server.port=8080
 
 # 4. Run the application
 mvn spring-boot:run
@@ -494,22 +568,43 @@ mvn spring-boot:run
 # Hibernate auto-creates all tables on first run
 ```
 
-### Frontend
-```bash
-# Open directly in browser (no build step needed)
-# Or use VS Code Live Server extension
+---
 
-open finflow-frontend/index.html
+### Backend (Docker)
+
+```bash
+docker build -t finflow .
+docker run -p 8080:8080 \
+  -e MYSQLHOST=your_host \
+  -e MYSQLPORT=3306 \
+  -e MYSQLDATABASE=finflow \
+  -e MYSQLUSER=root \
+  -e MYSQLPASSWORD=your_password \
+  -e JWT_SECRET=your_secret \
+  finflow
 ```
 
+---
+
+### Frontend
+
+```bash
+# Open directly in browser
+# Or use VS Code Live Server extension
+open finflow-frontend/index.html
+
+# For production — change API_BASE in all JS files to your backend URL
+```
+
+---
+
 ### Create Admin Account
+
 ```bash
 curl -X POST "http://localhost:8080/api/auth/register/admin?adminSecret=finflow-admin-secret" \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","email":"admin@finflow.com","password":"admin123"}'
 ```
-
----
 
 ## Future Improvements
 
