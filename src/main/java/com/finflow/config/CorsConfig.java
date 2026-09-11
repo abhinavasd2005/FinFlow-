@@ -24,7 +24,7 @@ public class CorsConfig {
                 "http://127.0.0.1:5500",
                 "http://localhost:5173",
                 "http://127.0.0.1:63342",
-                "https://finflow-backend-bvg9.onrender.com",
+                "https://finflow-frontend-fv59.onrender.com",
                 "null"
         ));
 
