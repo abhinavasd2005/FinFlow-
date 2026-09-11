@@ -13,6 +13,8 @@ public class WalletResponse {
     private BigDecimal balance;
     private BigDecimal dailyLimit;
     private WalletStatus status;
+    private String freezeReason;
+    private LocalDateTime frozenAt;
     private LocalDateTime createdAt;
 
     public WalletResponse() {
@@ -20,13 +22,16 @@ public class WalletResponse {
 
     public WalletResponse(Long id, String walletNumber, String walletName,
                           BigDecimal balance, BigDecimal dailyLimit,
-                          WalletStatus status, LocalDateTime createdAt) {
+                          WalletStatus status, String freezeReason,
+                          LocalDateTime frozenAt, LocalDateTime createdAt) {
         this.id = id;
         this.walletNumber = walletNumber;
         this.walletName = walletName;
         this.balance = balance;
         this.dailyLimit = dailyLimit;
         this.status = status;
+        this.freezeReason = freezeReason;
+        this.frozenAt = frozenAt;
         this.createdAt = createdAt;
     }
 
@@ -52,6 +57,14 @@ public class WalletResponse {
 
     public WalletStatus getStatus() {
         return status;
+    }
+
+    public String getFreezeReason() {
+        return freezeReason;
+    }
+
+    public LocalDateTime getFrozenAt() {
+        return frozenAt;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -80,6 +93,14 @@ public class WalletResponse {
 
     public void setStatus(WalletStatus status) {
         this.status = status;
+    }
+
+    public void setFreezeReason(String freezeReason) {
+        this.freezeReason = freezeReason;
+    }
+
+    public void setFrozenAt(LocalDateTime frozenAt) {
+        this.frozenAt = frozenAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {

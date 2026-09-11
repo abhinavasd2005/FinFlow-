@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -93,6 +94,19 @@ public class WalletService {
         Wallet wallet = walletRepository.findByIdAndUserUsername(walletId, username)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
         return wallet.getBalance();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> lookupByWalletNumber(String walletNumber) {
+        Wallet wallet = walletRepository.findByWalletNumber(walletNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        return Map.of(
+                "id", wallet.getId(),
+                "walletName", wallet.getWalletName(),
+                "walletNumber", wallet.getWalletNumber(),
+                "ownerUsername", wallet.getUser().getUsername()
+        );
     }
 
     @Transactional

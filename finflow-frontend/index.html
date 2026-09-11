@@ -3,61 +3,116 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>FinFlow — Login</title>
+    <title>FinFlow - Sign in</title>
     <link rel="stylesheet" href="css/style.css"/>
 </head>
-<body>
+<body class="auth-page" data-page="auth">
+<main class="auth-shell">
+    <section class="auth-showcase" aria-label="FinFlow">
+        <a href="index.html" class="navbar-brand" aria-label="FinFlow home">
+            <span class="brand-mark"><i data-lucide="waypoints"></i></span>
+            Fin<span>Flow</span>
+        </a>
 
-<div class="auth-wrapper">
-    <div class="auth-card">
+        <div class="auth-intro">
+            <div class="eyebrow auth-eyebrow">Personal finance workspace</div>
+            <h1>Money moves, made clear.</h1>
+            <p>Keep your wallets, transfers, and transaction records in one focused place.</p>
 
-        <div class="auth-logo">
-            <h1>Fin<span>Flow</span></h1>
-            <p>Secure payment system</p>
+            <div class="auth-visual" aria-hidden="true">
+                <div class="fin-card-scene">
+                    <div class="fin-card" data-tilt-card>
+                        <div class="fin-card-top">
+                            <span class="fin-card-brand">FinFlow</span>
+                            <i data-lucide="contactless"></i>
+                        </div>
+                        <span class="fin-card-chip"></span>
+                        <div class="fin-card-number">Wallet ready</div>
+                        <div class="fin-card-bottom">
+                            <span>Secure transfers</span>
+                            <span class="fin-card-seal"><i data-lucide="shield-check"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ledger-preview">
+                    <div class="ledger-preview-header">
+                        <span>Workspace</span>
+                        <span>State</span>
+                    </div>
+                    <div class="ledger-preview-row">
+                        <span class="ledger-preview-label"><i data-lucide="wallet"></i>Wallets</span>
+                        <span class="ledger-preview-value">Ready</span>
+                    </div>
+                    <div class="ledger-preview-row">
+                        <span class="ledger-preview-label"><i data-lucide="send"></i>Transfers</span>
+                        <span class="ledger-preview-value">Verified</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="auth-tabs">
-            <button class="tab-btn active" onclick="switchTab('login')">Login</button>
-            <button class="tab-btn" onclick="switchTab('register')">Register</button>
+        <p class="auth-footnote">FinFlow secure wallet workspace</p>
+    </section>
+
+    <section class="auth-panel" aria-label="Account access">
+        <div class="auth-card">
+            <div class="auth-card-title">
+                <div class="eyebrow">Account access</div>
+                <h2>Welcome to FinFlow</h2>
+                <p>Use your account to continue.</p>
+            </div>
+
+            <div class="auth-tabs" role="tablist" aria-label="Authentication options">
+                <button class="tab-btn active" type="button" role="tab" aria-selected="true" onclick="switchTab('login')">Sign in</button>
+                <button class="tab-btn" type="button" role="tab" aria-selected="false" onclick="switchTab('register')">Create account</button>
+            </div>
+
+            <div id="login-form">
+                <div id="login-alert" class="alert" role="alert"></div>
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" autocomplete="username" placeholder="Enter your username"/>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" autocomplete="current-password" placeholder="Enter your password"/>
+                </div>
+                <button class="btn btn-primary auth-submit" type="button" onclick="handleLogin()">
+                    <i data-lucide="arrow-right"></i>
+                    <span id="login-btn-text">Sign in</span>
+                </button>
+            </div>
+
+            <div id="register-form" style="display:none">
+                <div id="register-alert" class="alert" role="alert"></div>
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" autocomplete="username" placeholder="Choose a username"/>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" autocomplete="email" placeholder="name@example.com"/>
+                </div>
+                <div class="form-group">
+                    <label for="reg-phone">Phone <span class="field-hint">Optional, international format</span></label>
+                    <input type="tel" id="reg-phone" autocomplete="tel" placeholder="+919876543210"/>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" autocomplete="new-password" placeholder="At least 6 characters"/>
+                </div>
+                <button class="btn btn-primary auth-submit" type="button" onclick="handleRegister()">
+                    <i data-lucide="user-plus"></i>
+                    <span id="reg-btn-text">Create account</span>
+                </button>
+            </div>
         </div>
+    </section>
+</main>
 
-        <div id="login-form">
-            <div id="login-alert" class="alert"></div>
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="login-username" placeholder="Enter username"/>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="login-password" placeholder="Enter password"/>
-            </div>
-            <button class="btn btn-primary" onclick="handleLogin()">
-                <span id="login-btn-text">Sign In</span>
-            </button>
-        </div>
-
-        <div id="register-form" style="display:none">
-            <div id="register-alert" class="alert"></div>
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="reg-username" placeholder="Choose a username"/>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="reg-email" placeholder="Enter email"/>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="reg-password" placeholder="Min 6 characters"/>
-            </div>
-            <button class="btn btn-primary" onclick="handleRegister()">
-                <span id="reg-btn-text">Create Account</span>
-            </button>
-        </div>
-
-    </div>
-</div>
-
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/auth.js"></script>
 </body>
 </html>

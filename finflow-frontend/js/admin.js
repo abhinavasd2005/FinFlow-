@@ -1,543 +1,372 @@
-const API_BASE = 'https://finflow-backendapp.onrender.com/api';
-
-const token =
-    sessionStorage.getItem('token');
-
-const username =
-    sessionStorage.getItem('username');
-
-const role =
-    sessionStorage.getItem('role');
+const API_BASE = window.FINFLOW_API_BASE;
+const token = sessionStorage.getItem('token');
+const username = sessionStorage.getItem('username');
+const role = sessionStorage.getItem('role');
+let adminNoticeTimer;
 
 if (!token) {
-    window.location.href =
-        '../index.html';
+    window.location.href = '../index.html';
 }
 
 if (role !== 'ADMIN') {
-    window.location.href =
-        '../dashboard.html';
+    window.location.href = '../dashboard.html';
 }
 
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
+document.addEventListener('DOMContentLoaded', () => {
+    const navUsername = document.getElementById('nav-username');
+    if (navUsername) navUsername.textContent = username || '';
 
-        document.getElementById(
-            'nav-username'
-        ).textContent =
-            username || '';
-
+    if (document.getElementById('alerts-container')) {
         loadDashboard();
-        if (
-            window.location.pathname.includes(
-                'admin-fraud.html'
-            )
-        ) {
-            loadFraudPage();
-        }
     }
-);
+
+    if (document.getElementById('fraud-body')) {
+        loadFraudPage();
+    }
+});
 
 function authHeaders() {
-
     return {
-        'Content-Type':
-            'application/json',
-
-        'Authorization':
-            `Bearer ${token}`
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
     };
 }
 
 function logout() {
-
     sessionStorage.clear();
-
-    window.location.href =
-        '../index.html';
+    window.location.href = '../index.html';
 }
 
 async function loadDashboard() {
-
     try {
-
-        const [
-            alertsRes,
-            queueRes
-        ] = await Promise.all([
-
-            fetch(
-                `${API_BASE}/fraud/alerts`,
-                {
-                    headers:
-                        authHeaders()
-                }
-            ),
-
-            fetch(
-                `${API_BASE}/fraud/queue/size`,
-                {
-                    headers:
-                        authHeaders()
-                }
-            )
+        const [alertsRes, queueRes] = await Promise.all([
+            fetch(`${API_BASE}/fraud/alerts`, { headers: authHeaders() }),
+            fetch(`${API_BASE}/fraud/queue/size`, { headers: authHeaders() })
         ]);
 
-        const alerts =
-            await alertsRes.json();
+        if (handleAuthFailure(alertsRes) || handleAuthFailure(queueRes)) return;
 
-        const queue =
-            await queueRes.json();
+        const [alerts, queue] = await Promise.all([
+            readJson(alertsRes),
+            readJson(queueRes)
+        ]);
+
+        if (!alertsRes.ok || !queueRes.ok || !Array.isArray(alerts)) {
+            throw new Error(alerts.message || queue.message || 'Unable to load fraud data');
+        }
 
         renderStats(alerts, queue);
-
         renderAlerts(alerts);
-
     } catch (e) {
-
-        console.error(e);
+        renderDashboardError(e.message || 'Unable to load fraud data.');
     }
 }
 
 function renderStats(alerts, queue) {
-
-    document.getElementById(
-        'total-alerts'
-    ).textContent =
-        alerts.length;
-
-    document.getElementById(
-        'pending-alerts'
-    ).textContent =
-        alerts.filter(
-            a => a.alertStatus === 'PENDING'
-        ).length;
-
-    document.getElementById(
-        'high-risk'
-    ).textContent =
-        alerts.filter(
-            a => a.fraudScore >= 70
-        ).length;
-
-    document.getElementById(
-        'queue-size'
-    ).textContent =
-        queue.pendingInQueue || 0;
+    setText('total-alerts', alerts.length);
+    setText('pending-alerts', alerts.filter(alert => alert.alertStatus === 'PENDING').length);
+    setText('high-risk', alerts.filter(alert => Number(alert.fraudScore) >= 70).length);
+    setText('queue-size', queue.pendingInQueue || 0);
 }
 
 function renderAlerts(alerts) {
+    const container = document.getElementById('alerts-container');
+    if (!container) return;
 
-    const container =
-        document.getElementById(
-            'alerts-container'
-        );
-
+    container.innerHTML = '';
     if (!alerts.length) {
-
-        container.innerHTML = `
-
-            <div style="
-                text-align:center;
-                color:var(--text-muted);
-                padding:2rem;
-            ">
-
-                No alerts found
-
-            </div>
-        `;
-
+        container.appendChild(emptyMessage('No alerts found'));
         return;
     }
 
-    const recent =
-        alerts.slice(0, 5);
+    alerts.slice(0, 5).forEach(alert => {
+        const card = document.createElement('div');
+        card.className = 'fraud-alert-card';
 
-    container.innerHTML =
-        recent.map(alert => `
+        const header = document.createElement('div');
+        header.className = 'fraud-alert-header';
+        const reference = document.createElement('strong');
+        reference.textContent = alert.transactionReference || 'Unknown transaction';
+        header.append(reference, createBadge(
+            String(alert.fraudScore || 0),
+            scoreBadgeType(alert.fraudScore)
+        ));
 
-            <div style="
-                border:1px solid var(--border);
-                border-radius:var(--radius-sm);
-                padding:1rem;
-                margin-bottom:1rem;
-                background:var(--bg-input);
-            ">
+        const reasons = document.createElement('div');
+        reasons.className = 'fraud-alert-reasons';
+        reasons.textContent = alert.triggeredRules || 'No rules';
 
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    margin-bottom:0.75rem;
-                ">
-
-                    <strong>
-                        ${alert.transactionReference}
-                    </strong>
-
-                    <span class="
-                        badge badge-${
-            alert.fraudScore >= 70
-                ? 'danger'
-                : alert.fraudScore >= 40
-                    ? 'warning'
-                    : 'info'
-        }
-                    ">
-
-                        ${alert.fraudScore}
-
-                    </span>
-
-                </div>
-
-                <div style="
-                    color:var(--text-muted);
-                    font-size:0.85rem;
-                    margin-bottom:0.75rem;
-                ">
-
-                    ${
-            alert.triggeredRules ||
-            'No rules'
-        }
-
-                </div>
-
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                ">
-
-                    <span class="
-                        badge badge-${
-            alert.alertStatus ===
-            'PENDING'
-                ? 'warning'
-                : alert.alertStatus ===
-                'REVIEWED'
-                    ? 'success'
-                    : 'info'
-        }
-                    ">
-
-                        ${alert.alertStatus}
-
-                    </span>
-
-                    <small style="
-                        color:var(--text-muted)
-                    ">
-
-                        ${
-            formatDate(
-                alert.createdAt
-            )
-        }
-
-                    </small>
-
-                </div>
-
-            </div>
-
-        `).join('');
-}
-
-function formatDate(date) {
-
-    return new Date(date)
-        .toLocaleString(
-            'en-US',
-            {
-                month:'short',
-                day:'numeric',
-                hour:'2-digit',
-                minute:'2-digit'
-            }
+        const footer = document.createElement('div');
+        footer.className = 'fraud-alert-footer';
+        footer.append(
+            createBadge(alert.alertStatus || 'PENDING', statusBadgeType(alert.alertStatus)),
+            smallText(formatDate(alert.createdAt))
         );
+
+        card.append(header, reasons, footer);
+        container.appendChild(card);
+    });
 }
+
 async function loadFraudPage() {
-
+    const body = document.getElementById('fraud-body');
     try {
+        const res = await fetch(`${API_BASE}/fraud/alerts`, {
+            headers: authHeaders()
+        });
 
-        const res =
-            await fetch(
-                `${API_BASE}/fraud/alerts`,
-                {
-                    headers:
-                        authHeaders()
-                }
-            );
+        if (handleAuthFailure(res)) return;
 
-        const alerts =
-            await res.json();
+        const alerts = await readJson(res);
+        if (!res.ok || !Array.isArray(alerts)) {
+            throw new Error(alerts.message || 'Unable to load fraud alerts');
+        }
 
         renderFraudTable(alerts);
-
     } catch (e) {
-
-        console.error(e);
+        if (body) {
+            body.innerHTML = '';
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 7;
+            cell.textContent = e.message || 'Unable to load fraud alerts.';
+            cell.className = 'table-message';
+            row.appendChild(cell);
+            body.appendChild(row);
+        }
     }
 }
 
 function renderFraudTable(alerts) {
+    const body = document.getElementById('fraud-body');
+    if (!body) return;
 
-    const body =
-        document.getElementById(
-            'fraud-body'
-        );
-
-    if (!body) {
-        return;
-    }
-
+    body.innerHTML = '';
     if (!alerts.length) {
-
-        body.innerHTML = `
-
-            <tr>
-
-                <td colspan="7"
-                    style="
-                        text-align:center;
-                        padding:2rem;
-                        color:var(--text-muted);
-                    ">
-
-                    No alerts found
-
-                </td>
-
-            </tr>
-        `;
-
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.textContent = 'No alerts found';
+        cell.className = 'table-message';
+        row.appendChild(cell);
+        body.appendChild(row);
         return;
     }
 
-    body.innerHTML =
-        alerts.map(alert => `
+    alerts.forEach(alert => {
+        const row = document.createElement('tr');
+        appendCell(row, alert.id || '—');
+        appendCell(row, alert.transactionReference || '—', 'reference-cell');
 
-            <tr>
+        const scoreCell = document.createElement('td');
+        scoreCell.appendChild(createBadge(String(alert.fraudScore || 0), scoreBadgeType(alert.fraudScore)));
+        row.appendChild(scoreCell);
 
-                <td>
-                    ${alert.id}
-                </td>
+        const statusCell = document.createElement('td');
+        statusCell.appendChild(createBadge(alert.alertStatus || 'PENDING', statusBadgeType(alert.alertStatus)));
+        row.appendChild(statusCell);
 
-                <td style="
-                    font-family:monospace;
-                    font-size:0.8rem;
-                ">
+        appendCell(row, alert.triggeredRules || 'No rules', 'rules-cell');
+        appendCell(row, formatDate(alert.createdAt));
 
-                    ${alert.transactionReference}
+        const actions = document.createElement('td');
+        const actionGroup = document.createElement('div');
+        actionGroup.className = 'fraud-actions';
+        actionGroup.append(
+            createActionButton('Review', 'eye', 'btn btn-secondary btn-sm', () => reviewAlert(alert.id)),
+            createActionButton('Dismiss', 'circle-x', 'btn btn-danger btn-sm', () => dismissAlert(alert.id))
+        );
+        actions.appendChild(actionGroup);
+        row.appendChild(actions);
 
-                </td>
+        body.appendChild(row);
+    });
 
-                <td>
-
-                    <span class="
-                        badge badge-${
-            alert.fraudScore >= 70
-                ? 'danger'
-                : alert.fraudScore >= 40
-                    ? 'warning'
-                    : 'info'
-        }
-                    ">
-
-                        ${alert.fraudScore}
-
-                    </span>
-
-                </td>
-
-                <td>
-
-                    <span class="
-                        badge badge-${
-            alert.alertStatus ===
-            'PENDING'
-                ? 'warning'
-                : alert.alertStatus ===
-                'REVIEWED'
-                    ? 'success'
-                    : 'info'
-        }
-                    ">
-
-                        ${alert.alertStatus}
-
-                    </span>
-
-                </td>
-
-                <td style="
-                    max-width:240px;
-                    color:var(--text-muted);
-                    font-size:0.8rem;
-                ">
-
-                    ${
-            alert.triggeredRules ||
-            'No rules'
-        }
-
-                </td>
-
-                <td>
-
-                    ${
-            formatDate(
-                alert.createdAt
-            )
-        }
-
-                </td>
-
-                <td>
-
-                    <div style="
-                        display:flex;
-                        gap:0.5rem;
-                        flex-wrap:wrap;
-                    ">
-
-                        <button class="
-                            btn btn-secondary btn-sm
-                        "
-                        onclick="
-                            reviewAlert(${alert.id})
-                        ">
-
-                            Review
-
-                        </button>
-
-                        <button class="
-                            btn btn-danger btn-sm
-                        "
-                        onclick="
-                            dismissAlert(${alert.id})
-                        ">
-
-                            Dismiss
-
-                        </button>
-
-                    </div>
-
-                </td>
-
-            </tr>
-
-        `).join('');
+    window.FinFlowUI?.refreshIcons();
 }
 
 async function reviewAlert(alertId) {
-
-    try {
-
-        await fetch(
-            `${API_BASE}/fraud/alerts/${alertId}/review`,
-            {
-                method:'PATCH',
-                headers:
-                    authHeaders()
-            }
-        );
-
-        loadFraudPage();
-
-    } catch (e) {
-
-        console.error(e);
-    }
+    await updateAlert(alertId, 'review', 'Alert marked reviewed');
 }
 
 async function dismissAlert(alertId) {
+    await updateAlert(alertId, 'dismiss', 'Alert dismissed');
+}
 
+async function updateAlert(alertId, action, successMessage) {
     try {
+        const res = await fetch(`${API_BASE}/fraud/alerts/${alertId}/${action}`, {
+            method: 'PATCH',
+            headers: authHeaders()
+        });
 
-        await fetch(
-            `${API_BASE}/fraud/alerts/${alertId}/dismiss`,
-            {
-                method:'PATCH',
-                headers:
-                    authHeaders()
-            }
-        );
+        if (handleAuthFailure(res)) return;
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.message || `Unable to ${action} alert`);
 
+        showAdminNotice(data.message || successMessage, 'success');
         loadFraudPage();
-
     } catch (e) {
-
-        console.error(e);
+        showAdminNotice(e.message || 'Unable to update alert.', 'error');
     }
 }
 
 async function freezeWallet() {
-
-    const walletId =
-        document.getElementById(
-            'wallet-id'
-        ).value;
-
-    const reason =
-        document.getElementById(
-            'freeze-reason'
-        ).value;
+    const walletId = document.getElementById('wallet-id').value.trim();
+    const reason = document.getElementById('freeze-reason').value.trim();
 
     if (!walletId || !reason) {
+        showAdminNotice('Enter a wallet ID and a reason.', 'error');
         return;
     }
 
     try {
-
-        await fetch(
-            `${API_BASE}/fraud/freeze/${walletId}?reason=${encodeURIComponent(reason)}`,
-            {
-                method:'POST',
-                headers:
-                    authHeaders()
-            }
+        const res = await fetch(
+            `${API_BASE}/fraud/freeze/${encodeURIComponent(walletId)}?reason=${encodeURIComponent(reason)}`,
+            { method: 'POST', headers: authHeaders() }
         );
 
-        alert('Wallet frozen');
+        if (handleAuthFailure(res)) return;
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.message || 'Unable to freeze wallet');
 
+        document.getElementById('freeze-reason').value = '';
+        showAdminNotice(data.message || 'Wallet frozen', 'success');
     } catch (e) {
-
-        console.error(e);
+        showAdminNotice(e.message || 'Unable to freeze wallet.', 'error');
     }
 }
 
 async function unfreezeWallet() {
-
-    const walletId =
-        document.getElementById(
-            'wallet-id'
-        ).value;
-
+    const walletId = document.getElementById('wallet-id').value.trim();
     if (!walletId) {
+        showAdminNotice('Enter a wallet ID.', 'error');
         return;
     }
 
     try {
-
-        await fetch(
-            `${API_BASE}/fraud/unfreeze/${walletId}`,
-            {
-                method:'POST',
-                headers:
-                    authHeaders()
-            }
+        const res = await fetch(
+            `${API_BASE}/fraud/unfreeze/${encodeURIComponent(walletId)}`,
+            { method: 'POST', headers: authHeaders() }
         );
 
-        alert('Wallet unfrozen');
+        if (handleAuthFailure(res)) return;
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.message || 'Unable to unfreeze wallet');
 
+        document.getElementById('freeze-reason').value = '';
+        showAdminNotice(data.message || 'Wallet unfrozen', 'success');
     } catch (e) {
+        showAdminNotice(e.message || 'Unable to unfreeze wallet.', 'error');
+    }
+}
 
-        console.error(e);
+function handleAuthFailure(res) {
+    if (res.status === 401) {
+        logout();
+        return true;
+    }
+
+    if (res.status === 403) {
+        window.location.href = '../dashboard.html';
+        return true;
+    }
+
+    return false;
+}
+
+function renderDashboardError(message) {
+    const container = document.getElementById('alerts-container');
+    if (!container) return;
+    container.innerHTML = '';
+    container.appendChild(emptyMessage(message));
+}
+
+function emptyMessage(message) {
+    const element = document.createElement('div');
+    element.className = 'table-message';
+    element.textContent = message;
+    return element;
+}
+
+function appendCell(row, value, className) {
+    const cell = document.createElement('td');
+    cell.textContent = value;
+    if (className) cell.className = className;
+    row.appendChild(cell);
+}
+
+function createBadge(label, type) {
+    const badge = document.createElement('span');
+    badge.className = `badge badge-${type}`;
+    badge.textContent = label;
+    return badge;
+}
+
+function createActionButton(label, iconName, className, handler) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.innerHTML = `<i data-lucide="${iconName}"></i><span>${label}</span>`;
+    button.addEventListener('click', handler);
+    return button;
+}
+
+function smallText(value) {
+    const element = document.createElement('small');
+    element.textContent = value;
+    return element;
+}
+
+function scoreBadgeType(score) {
+    const value = Number(score || 0);
+    return value >= 70 ? 'danger' : value >= 40 ? 'warning' : 'info';
+}
+
+function statusBadgeType(status) {
+    return status === 'PENDING' ? 'warning' : status === 'REVIEWED' ? 'success' : 'info';
+}
+
+function formatDate(date) {
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return '—';
+
+    return parsed.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function showAdminNotice(message, type = 'success') {
+    const notice = document.getElementById('admin-notice');
+    if (!notice) return;
+
+    window.clearTimeout(adminNoticeTimer);
+    notice.className = `admin-notice ${type} show`;
+    notice.replaceChildren();
+
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', type === 'error' ? 'circle-alert' : 'circle-check');
+    notice.append(icon, document.createTextNode(message));
+    window.FinFlowUI?.refreshIcons();
+
+    adminNoticeTimer = window.setTimeout(() => notice.classList.remove('show'), 5000);
+}
+
+async function readJson(res) {
+    const text = await res.text();
+    if (!text) return {};
+
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        return {};
     }
 }

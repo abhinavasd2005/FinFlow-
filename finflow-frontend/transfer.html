@@ -3,83 +3,113 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>FinFlow — Transfer</title>
+    <title>FinFlow - Transfer</title>
     <link rel="stylesheet" href="css/style.css"/>
 </head>
-<body>
-
-<nav class="navbar">
+<body data-page="transfer">
+<nav class="navbar" aria-label="Main navigation">
     <div class="container navbar-inner">
-        <a href="dashboard.html" class="navbar-brand">Fin<span>Flow</span></a>
+        <a href="dashboard.html" class="navbar-brand" aria-label="FinFlow dashboard">
+            <span class="brand-mark"><i data-lucide="waypoints"></i></span>
+            Fin<span>Flow</span>
+        </a>
+        <div class="nav-links">
+            <a class="nav-link" data-nav="dashboard" href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>Overview</span></a>
+            <a class="nav-link" data-nav="transfer" href="transfer.html"><i data-lucide="send"></i><span>Transfer</span></a>
+            <a class="nav-link" data-nav="history" href="history.html"><i data-lucide="receipt-text"></i><span>Activity</span></a>
+        </div>
         <div class="navbar-user">
-            <span class="navbar-username" id="nav-username"></span>
-            <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
-            <a href="history.html" class="btn btn-secondary btn-sm">History</a>
-            <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+            <div class="user-chip">
+                <span class="user-avatar" data-user-initial></span>
+                <span class="navbar-username" id="nav-username"></span>
+            </div>
+            <button class="btn btn-danger btn-sm btn-icon" type="button" onclick="logout()" title="Log out" aria-label="Log out"><i data-lucide="log-out"></i></button>
         </div>
     </div>
 </nav>
 
-<div class="container">
-    <div class="dashboard-header">
-        <div>
-            <h1>Transfer Funds</h1>
-            <p>Send money to any wallet instantly</p>
+<main class="container app-main">
+    <header class="page-header">
+        <div class="page-heading">
+            <div class="eyebrow">Payments</div>
+            <h1>Send funds</h1>
+            <p>Move money between wallets with a clear review before it is sent.</p>
         </div>
-    </div>
+    </header>
 
-    <div style="max-width:520px;margin:0 auto">
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem">
-            <div id="transfer-alert" class="alert"></div>
+    <div class="transfer-layout">
+        <section class="transfer-form-card" aria-labelledby="transfer-form-title">
+            <div class="form-card-header">
+                <div>
+                    <div class="eyebrow">New transfer</div>
+                    <h2 id="transfer-form-title">Payment details</h2>
+                    <p>All required fields are checked before funds move.</p>
+                </div>
+                <span class="form-card-icon"><i data-lucide="arrow-left-right"></i></span>
+            </div>
+
+            <div id="transfer-alert" class="alert" role="alert" aria-live="polite"></div>
 
             <div class="form-group">
-                <label>From Wallet</label>
+                <label for="from-wallet">From wallet</label>
                 <select id="from-wallet">
                     <option value="">Loading wallets...</option>
                 </select>
-                <div id="from-balance" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem"></div>
+                <div class="input-note" id="from-balance"></div>
             </div>
 
             <div class="form-group">
-                <label>To Wallet Number</label>
-                <input type="text" id="to-wallet-number" placeholder="Enter destination wallet number e.g. WLT-XXXXXXXX"/>
-                <div id="wallet-lookup-status" style="font-size:0.8rem;margin-top:0.4rem"></div>
+                <label for="to-wallet-number">Recipient wallet number</label>
+                <input type="text" id="to-wallet-number" autocomplete="off" placeholder="WLT-XXXXXXXX"/>
+                <div class="lookup-status" id="wallet-lookup-status" aria-live="polite"></div>
             </div>
 
             <div class="form-group">
-                <label>Amount ($)</label>
-                <input type="number" id="transfer-amount" placeholder="0.00" min="0.01" step="0.01"/>
+                <label for="transfer-amount">Amount</label>
+                <input type="number" id="transfer-amount" placeholder="0.00" min="0.01" step="0.01" inputmode="decimal"/>
             </div>
 
             <div class="form-group">
-                <label>Description <span style="color:var(--text-muted)">(optional)</span></label>
-                <input type="text" id="transfer-desc" placeholder="e.g. Rent payment, Invoice #123"/>
+                <label for="transfer-desc">Reference <span class="field-hint">Optional</span></label>
+                <input type="text" id="transfer-desc" maxlength="255" placeholder="What is this for?"/>
             </div>
 
-            <hr class="divider"/>
-
-            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1.25rem;font-size:0.85rem">
-                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
-                    <span style="color:var(--text-muted)">From</span>
-                    <span id="slip-from">—</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
-                    <span style="color:var(--text-muted)">To</span>
-                    <span id="slip-to">—</span>
-                </div>
-                <div style="display:flex;justify-content:space-between">
-                    <span style="color:var(--text-muted)">Amount</span>
-                    <span id="slip-amount" style="font-weight:700;color:var(--accent)">—</span>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" onclick="submitTransfer()">
-                <span id="transfer-btn-text">Send Money</span>
+            <button class="btn btn-primary transfer-submit" type="button" onclick="submitTransfer()">
+                <i data-lucide="send"></i>
+                <span id="transfer-btn-text">Send money</span>
             </button>
-        </div>
-    </div>
-</div>
+        </section>
 
+        <aside class="transfer-companion" aria-label="Transfer review and assistant">
+            <section class="companion-block" aria-labelledby="draft-heading">
+                <div class="feature-header">
+                    <div>
+                        <div class="feature-kicker">FinFlow assistant</div>
+                        <h2 id="draft-heading">Draft from a note</h2>
+                    </div>
+                    <span class="feature-status" id="ai-draft-status">Checking availability</span>
+                </div>
+                <textarea id="ai-transfer-instruction" rows="5" maxlength="500" placeholder="Send 25 dollars from Savings to WLT-ABC123 for lunch"></textarea>
+                <button class="btn btn-secondary" id="ai-draft-btn" type="button" onclick="createAiDraft()" disabled>
+                    <i data-lucide="sparkles"></i>
+                    <span>Draft transfer</span>
+                </button>
+                <div class="ai-output" id="ai-draft-output" aria-live="polite"></div>
+            </section>
+
+            <section class="companion-block transfer-review" aria-labelledby="review-heading">
+                <div class="transfer-review-heading" id="review-heading"><i data-lucide="clipboard-check"></i>Transfer review</div>
+                <div class="review-row"><span class="review-label">From</span><span class="review-value" id="slip-from">Not selected</span></div>
+                <div class="review-row"><span class="review-label">To</span><span class="review-value" id="slip-to">Not selected</span></div>
+                <div class="review-row"><span class="review-label">Amount</span><span class="review-value amount" id="slip-amount">Not set</span></div>
+            </section>
+        </aside>
+    </div>
+</main>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/transfer.js"></script>
 </body>
 </html>

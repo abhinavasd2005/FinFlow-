@@ -1,5 +1,4 @@
-const API_BASE = 'https://finflow-backendapp.onrender.com/api';
-
+const API_BASE = window.FINFLOW_API_BASE;
 const token = sessionStorage.getItem('token');
 const username = sessionStorage.getItem('username');
 
@@ -10,28 +9,19 @@ if (!token) {
 let wallets = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('nav-username').textContent = username || '';
 
-    document.getElementById('nav-username').textContent =
-        username || '';
+    if (!await loadWallets()) {
+        return;
+    }
 
-    await loadWallets();
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    const walletParam =
-        params.get('wallet');
-
-    if (walletParam) {
-
-        document.getElementById(
-            'wallet-select'
-        ).value = walletParam;
+    const walletParam = new URLSearchParams(window.location.search).get('wallet');
+    const walletSelect = document.getElementById('wallet-select');
+    if (walletParam && wallets.some(wallet => String(wallet.id) === walletParam)) {
+        walletSelect.value = walletParam;
     }
 
     setDefaultDates();
-
     loadHistory();
 });
 
@@ -55,250 +45,278 @@ function fmt(amount) {
 }
 
 async function loadWallets() {
-
     try {
+        const res = await fetch(`${API_BASE}/wallets/my-wallets`, {
+            headers: authHeaders()
+        });
 
-        const res = await fetch(
-            `${API_BASE}/wallets/my-wallets`,
-            { headers: authHeaders() }
-        );
+        if (res.status === 401 || res.status === 403) {
+            logout();
+            return false;
+        }
 
-        wallets = await res.json();
+        const data = await readJson(res);
+        if (!res.ok || !Array.isArray(data)) {
+            throw new Error(data.message || 'Unable to load wallets');
+        }
 
-        const select =
-            document.getElementById('wallet-select');
+        wallets = data;
+        const select = document.getElementById('wallet-select');
+        select.innerHTML = '';
 
-        wallets.forEach(w => {
-
-            const option =
-                document.createElement('option');
-
-            option.value = w.id;
-            option.textContent =
-                `${w.walletName} (${w.walletNumber})`;
-
+        wallets.forEach(wallet => {
+            const option = document.createElement('option');
+            option.value = wallet.id;
+            option.textContent = `${wallet.walletName} (${wallet.walletNumber})`;
             select.appendChild(option);
         });
 
+        if (!wallets.length) {
+            showHistoryMessage('Create a wallet before viewing transaction history.');
+            return false;
+        }
+
+        return true;
     } catch (e) {
-        console.error(e);
+        showHistoryMessage(e.message || 'Failed to load wallets. Is the server running?');
+        return false;
     }
 }
 
 function setDefaultDates() {
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - 30);
 
-    const now = new Date();
+    document.getElementById('from-date').value = toDateTimeInput(from);
+    document.getElementById('to-date').value = toDateTimeInput(to);
+}
 
-    const before = new Date();
-    before.setDate(before.getDate() - 30);
-
-    document.getElementById('from-date').value =
-        before.toISOString().slice(0,16);
-
-    document.getElementById('to-date').value =
-        now.toISOString().slice(0,16);
+function toDateTimeInput(date) {
+    const offset = date.getTimezoneOffset();
+    return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16);
 }
 
 async function loadHistory() {
+    const filters = getFilters();
+    if (!filters) return;
 
-    const walletId =
-        document.getElementById('wallet-select').value;
-
-    const from =
-        document.getElementById('from-date').value;
-
-    const to =
-        document.getElementById('to-date').value;
-
+    setLoading(true);
     try {
-
         const res = await fetch(
-            `${API_BASE}/transactions/wallet/${walletId}/filter?from=${from}:00&to=${to}:00`,
-            {
-                headers: authHeaders()
-            }
+            `${API_BASE}/transactions/wallet/${filters.walletId}/filter?from=${encodeURIComponent(filters.from)}&to=${encodeURIComponent(filters.to)}`,
+            { headers: authHeaders() }
         );
 
-        const txns = await res.json();
+        if (res.status === 401 || res.status === 403) {
+            logout();
+            return;
+        }
 
-        renderTransactions(txns);
+        const transactions = await readJson(res);
+        if (!res.ok || !Array.isArray(transactions)) {
+            throw new Error(transactions.message || 'Unable to load transactions');
+        }
 
+        renderTransactions(transactions);
     } catch (e) {
-
-        console.error(e);
+        showHistoryMessage(e.message || 'Failed to load transaction history.');
     }
 }
 
-function renderTransactions(txns) {
+function getFilters() {
+    const walletId = document.getElementById('wallet-select').value;
+    const from = document.getElementById('from-date').value;
+    const to = document.getElementById('to-date').value;
 
-    document.getElementById('history-loading')
-        .style.display = 'none';
+    if (!walletId || !from || !to) {
+        showHistoryMessage('Choose a wallet and date range first.');
+        return null;
+    }
 
-    document.getElementById('history-table')
-        .style.display = 'table';
+    if (new Date(to) < new Date(from)) {
+        showHistoryMessage('The end date must be after the start date.');
+        return null;
+    }
 
-    document.getElementById('txn-count')
-        .textContent = `${txns.length} transactions`;
+    return {
+        walletId,
+        from: `${from}:00`,
+        to: `${to}:00`
+    };
+}
 
-    const body =
-        document.getElementById('history-body');
+function renderTransactions(transactions) {
+    setLoading(false);
+    document.getElementById('history-table').hidden = false;
+    document.getElementById('txn-count').textContent = `${transactions.length} transactions`;
 
+    const body = document.getElementById('history-body');
     body.innerHTML = '';
 
-    txns.forEach(txn => {
-
+    if (!transactions.length) {
         const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.textContent = 'No transactions found for this date range.';
+        cell.style.textAlign = 'center';
+        cell.style.padding = '2rem';
+        cell.style.color = 'var(--text-muted)';
+        row.appendChild(cell);
+        body.appendChild(row);
+        return;
+    }
 
-        const isDebit =
-            txn.type === 'TRANSFER';
+    transactions.forEach(transaction => {
+        const row = document.createElement('tr');
+        const isDebit = transaction.type === 'DEBIT';
 
-        const fraudBadge =
-            txn.fraudScore > 70
-                ? `<span class="badge badge-danger">${txn.fraudScore}</span>`
-                : txn.fraudScore > 0
-                    ? `<span class="badge badge-warning">${txn.fraudScore}</span>`
-                    : `<span class="badge badge-success">0</span>`;
+        appendCell(row, formatDate(transaction.createdAt));
+        appendCell(row, transaction.referenceNumber || '—', 'history-reference');
+        appendCell(row, transaction.type || '—');
 
-        row.innerHTML = `
+        const amountCell = appendCell(
+            row,
+            `${isDebit ? '-' : '+'}${fmt(transaction.amount)}`,
+            `txn-amount ${isDebit ? 'debit' : 'credit'}`
+        );
+        amountCell.style.whiteSpace = 'nowrap';
 
-            <td>
-                ${formatDate(txn.createdAt)}
-            </td>
+        const statusCell = document.createElement('td');
+        statusCell.appendChild(createBadge(
+            transaction.status || 'UNKNOWN',
+            transaction.status === 'COMPLETED' ? 'success' : 'danger'
+        ));
+        row.appendChild(statusCell);
 
-            <td style="
-                font-family:monospace;
-                font-size:0.78rem
-            ">
-                ${txn.referenceNumber}
-            </td>
+        const fraudCell = document.createElement('td');
+        const fraudScore = Number(transaction.fraudScore || 0);
+        fraudCell.appendChild(createBadge(
+            String(fraudScore),
+            fraudScore > 70 ? 'danger' : fraudScore > 0 ? 'warning' : 'success'
+        ));
+        row.appendChild(fraudCell);
 
-            <td>
-                ${txn.type}
-            </td>
-
-            <td class="
-                txn-amount ${isDebit ? 'debit' : 'credit'}
-            ">
-                ${isDebit ? '-' : '+'}
-                ${fmt(txn.amount)}
-            </td>
-
-            <td>
-                <span class="
-                    badge badge-${
-            txn.status === 'COMPLETED'
-                ? 'success'
-                : 'danger'
-        }
-                ">
-                    ${txn.status}
-                </span>
-            </td>
-
-            <td>
-                ${fraudBadge}
-            </td>
-
-            <td>
-                <a href="
-                    slip.html?txn=${txn.transactionId || txn.id}
-                "
-                   class="btn btn-secondary btn-sm">
-                    View
-                </a>
-            </td>
-        `;
+        const actionCell = document.createElement('td');
+        const link = document.createElement('a');
+        link.className = 'btn btn-secondary btn-sm';
+        link.innerHTML = '<i data-lucide="arrow-up-right"></i><span>View</span>';
+        link.href = `slip.html?txn=${encodeURIComponent(transaction.transactionId)}`;
+        actionCell.appendChild(link);
+        row.appendChild(actionCell);
 
         body.appendChild(row);
     });
+
+    window.FinFlowUI?.refreshIcons();
 }
 
 async function loadStatement() {
-
-    const walletId =
-        document.getElementById('wallet-select').value;
-
-    const from =
-        document.getElementById('from-date').value;
-
-    const to =
-        document.getElementById('to-date').value;
+    const filters = getFilters();
+    if (!filters) return;
 
     try {
-
         const res = await fetch(
-            `${API_BASE}/transactions/wallet/${walletId}/statement?from=${from}:00&to=${to}:00`,
-            {
-                headers: authHeaders()
-            }
+            `${API_BASE}/transactions/wallet/${filters.walletId}/statement?from=${encodeURIComponent(filters.from)}&to=${encodeURIComponent(filters.to)}`,
+            { headers: authHeaders() }
         );
 
-        const data = await res.json();
+        if (res.status === 401 || res.status === 403) {
+            logout();
+            return;
+        }
+
+        const data = await readJson(res);
+        if (!res.ok) {
+            throw new Error(data.message || 'Unable to load statement');
+        }
 
         renderStatement(data);
-
     } catch (e) {
-        console.error(e);
+        showHistoryMessage(e.message || 'Failed to load statement.');
     }
 }
 
 function renderStatement(data) {
+    const box = document.getElementById('statement-box');
+    box.hidden = false;
+    box.innerHTML = '';
 
-    const box =
-        document.getElementById('statement-box');
+    const heading = document.createElement('h3');
+    heading.textContent = 'Statement Summary';
+    box.appendChild(heading);
 
-    box.style.display = 'block';
+    appendStatementRow(box, 'Wallet', data.walletName || '—');
+    appendStatementRow(box, 'Wallet Number', data.walletNumber || '—');
+    appendStatementRow(box, 'Current Balance', fmt(data.currentBalance));
+    appendStatementRow(box, 'Total Credited', fmt(data.totalCredited), 'var(--success)');
+    appendStatementRow(box, 'Total Debited', fmt(data.totalDebited), 'var(--danger)');
+    appendStatementRow(box, 'Total Transactions', String(data.totalTransactions || 0));
+}
 
-    box.innerHTML = `
+function appendStatementRow(container, label, value, color) {
+    const row = document.createElement('div');
+    row.className = 'statement-row';
 
-        <h3 style="margin-bottom:1rem">
-            Statement Summary
-        </h3>
+    const labelElement = document.createElement('span');
+    labelElement.textContent = label;
+    const valueElement = document.createElement('strong');
+    valueElement.textContent = value;
+    if (color) valueElement.style.color = color;
 
-        <div class="statement-row">
-            <span>Wallet</span>
-            <strong>${data.walletName}</strong>
-        </div>
+    row.append(labelElement, valueElement);
+    container.appendChild(row);
+}
 
-        <div class="statement-row">
-            <span>Wallet Number</span>
-            <strong>${data.walletNumber}</strong>
-        </div>
+function appendCell(row, value, className) {
+    const cell = document.createElement('td');
+    cell.textContent = value;
+    if (className) cell.className = className;
+    row.appendChild(cell);
+    return cell;
+}
 
-        <div class="statement-row">
-            <span>Current Balance</span>
-            <strong>${fmt(data.currentBalance)}</strong>
-        </div>
+function createBadge(label, type) {
+    const badge = document.createElement('span');
+    badge.className = `badge badge-${type}`;
+    badge.textContent = label;
+    return badge;
+}
 
-        <div class="statement-row">
-            <span>Total Credited</span>
-            <strong style="color:var(--success)">
-                ${fmt(data.totalCredited)}
-            </strong>
-        </div>
+function setLoading(isLoading) {
+    const loading = document.getElementById('history-loading');
+    loading.hidden = !isLoading;
+    if (isLoading) loading.innerHTML = '<span class="spinner"></span>';
+}
 
-        <div class="statement-row">
-            <span>Total Debited</span>
-            <strong style="color:var(--danger)">
-                ${fmt(data.totalDebited)}
-            </strong>
-        </div>
-
-        <div class="statement-row">
-            <span>Total Transactions</span>
-            <strong>${data.totalTransactions}</strong>
-        </div>
-    `;
+function showHistoryMessage(message) {
+    const loading = document.getElementById('history-loading');
+    loading.hidden = false;
+    loading.textContent = message;
+    document.getElementById('history-table').hidden = true;
+    document.getElementById('txn-count').textContent = '';
 }
 
 function formatDate(date) {
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return '—';
 
-    return new Date(date)
-        .toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    return parsed.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+async function readJson(res) {
+    const text = await res.text();
+    if (!text) return {};
+
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        return {};
+    }
 }

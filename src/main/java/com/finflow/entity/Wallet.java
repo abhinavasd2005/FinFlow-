@@ -30,6 +30,12 @@ public class Wallet {
     @Column(nullable = false)
     private WalletStatus status = WalletStatus.ACTIVE;
 
+    @Column(name = "freeze_reason", length = 500)
+    private String freezeReason;
+
+    @Column(name = "frozen_at")
+    private LocalDateTime frozenAt;
+
     @Version
     private Long version;
 
@@ -41,6 +47,20 @@ public class Wallet {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -59,6 +79,12 @@ public class Wallet {
 
     public WalletStatus getStatus() { return status; }
     public void setStatus(WalletStatus status) { this.status = status; }
+
+    public String getFreezeReason() { return freezeReason; }
+    public void setFreezeReason(String freezeReason) { this.freezeReason = freezeReason; }
+
+    public LocalDateTime getFrozenAt() { return frozenAt; }
+    public void setFrozenAt(LocalDateTime frozenAt) { this.frozenAt = frozenAt; }
 
     public Long getVersion() { return version; }
     public void setVersion(Long version) { this.version = version; }

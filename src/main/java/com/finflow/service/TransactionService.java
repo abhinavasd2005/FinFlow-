@@ -9,6 +9,9 @@ import com.finflow.entity.Wallet;
 import com.finflow.repository.LedgerEntryRepository;
 import com.finflow.repository.TransactionRepository;
 import com.finflow.repository.WalletRepository;
+import com.finflow.exception.ForbiddenOperationException;
+import com.finflow.exception.InvalidRequestException;
+import com.finflow.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +52,7 @@ public class TransactionService {
                                                                         LocalDateTime from,
                                                                         LocalDateTime to,
                                                                         String username) {
+        validateDateRange(from, to);
         getOwnedWallet(walletId, username);
 
         return transactionRepository.findByWalletAndDateRange(walletId, from, to)
@@ -62,6 +66,7 @@ public class TransactionService {
                                                       LocalDateTime from,
                                                       LocalDateTime to,
                                                       String username) {
+        validateDateRange(from, to);
         Wallet wallet = getOwnedWallet(walletId, username);
 
         List<TransactionHistoryResponse> transactions =
@@ -94,14 +99,14 @@ public class TransactionService {
     @Transactional(readOnly = true)
     public TransferSlipResponse getTransferSlip(Long transactionId, String username) {
         Transaction tx = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         boolean isOwner =
                 tx.getFromWallet().getUser().getUsername().equals(username) ||
                         tx.getToWallet().getUser().getUsername().equals(username);
 
         if (!isOwner) {
-            throw new RuntimeException("Access denied");
+            throw new ForbiddenOperationException("Access denied");
         }
 
         BigDecimal balanceAfterTransfer = BigDecimal.ZERO;
@@ -135,13 +140,19 @@ public class TransactionService {
 
     private Wallet getOwnedWallet(Long walletId, String username) {
         Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
 
         if (!wallet.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Access denied");
+            throw new ForbiddenOperationException("Access denied");
         }
 
         return wallet;
+    }
+
+    private void validateDateRange(LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null || to.isBefore(from)) {
+            throw new InvalidRequestException("The end date must be after the start date");
+        }
     }
 
     private TransactionHistoryResponse toHistoryResponse(Transaction tx, Long requestingWalletId) {

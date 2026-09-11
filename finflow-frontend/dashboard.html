@@ -3,93 +3,167 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>FinFlow — Dashboard</title>
+    <title>FinFlow - Dashboard</title>
     <link rel="stylesheet" href="css/style.css"/>
 </head>
-<body>
-
-<nav class="navbar">
+<body data-page="dashboard">
+<nav class="navbar" aria-label="Main navigation">
     <div class="container navbar-inner">
-        <a href="dashboard.html" class="navbar-brand">Fin<span>Flow</span></a>
+        <a href="dashboard.html" class="navbar-brand" aria-label="FinFlow dashboard">
+            <span class="brand-mark"><i data-lucide="waypoints"></i></span>
+            Fin<span>Flow</span>
+        </a>
+
+        <div class="nav-links">
+            <a class="nav-link" data-nav="dashboard" href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>Overview</span></a>
+            <a class="nav-link" data-nav="transfer" href="transfer.html"><i data-lucide="send"></i><span>Transfer</span></a>
+            <a class="nav-link" data-nav="history" href="history.html"><i data-lucide="receipt-text"></i><span>Activity</span></a>
+        </div>
+
         <div class="navbar-user">
-            <span class="navbar-username" id="nav-username"></span>
-            <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+            <div class="user-chip">
+                <span class="user-avatar" data-user-initial></span>
+                <span class="navbar-username" id="nav-username"></span>
+            </div>
+            <button class="btn btn-danger btn-sm btn-icon" type="button" onclick="logout()" title="Log out" aria-label="Log out"><i data-lucide="log-out"></i></button>
         </div>
     </div>
 </nav>
 
-<div class="container">
-    <div class="dashboard-header">
-        <div>
-            <h1>Dashboard</h1>
-            <p id="greeting"></p>
+<main class="container app-main">
+    <header class="page-header">
+        <div class="page-heading">
+            <div class="eyebrow">Money overview</div>
+            <h1 id="greeting">Welcome back</h1>
+            <p>A clear view of your available funds and active wallets.</p>
         </div>
-        <button class="btn btn-primary btn-sm"
-                onclick="document.getElementById('create-wallet-modal').classList.add('show')">
-            + New Wallet
+        <button class="btn btn-primary" type="button" onclick="document.getElementById('create-wallet-modal').classList.add('show')">
+            <i data-lucide="plus"></i>
+            <span>New wallet</span>
         </button>
-    </div>
+    </header>
 
-    <div class="stats-grid">
+    <section class="balance-surface" aria-label="Balance overview">
+        <div class="balance-copy">
+            <div>
+                <div class="eyebrow">Total available</div>
+                <div class="balance-value" id="total-balance">$0.00</div>
+                <p>Across every wallet in your account</p>
+            </div>
+            <div class="balance-meta"><i data-lucide="shield-check"></i><span>Wallet balances update after each completed transfer</span></div>
+        </div>
+        <div class="balance-visual">
+            <span class="chart-caption">Wallet balance profile</span>
+            <canvas class="balance-chart" id="balance-chart" aria-label="Wallet balance profile chart"></canvas>
+        </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Wallet totals">
         <div class="stat-card">
-            <div class="stat-label">Total Balance</div>
-            <div class="stat-value" id="total-balance">—</div>
-            <div class="stat-sub">across all wallets</div>
+            <span class="stat-icon"><i data-lucide="wallet"></i></span>
+            <div>
+                <div class="stat-label">Wallets</div>
+                <div class="stat-value" id="wallet-count">0</div>
+                <div class="stat-sub">wallets in your account</div>
+            </div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Wallets</div>
-            <div class="stat-value" id="wallet-count">—</div>
-            <div class="stat-sub">active accounts</div>
+            <span class="stat-icon"><i data-lucide="badge-dollar-sign"></i></span>
+            <div>
+                <div class="stat-label">Daily capacity</div>
+                <div class="stat-value" id="total-limit">$0.00</div>
+                <div class="stat-sub">combined transfer limit</div>
+            </div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Daily Limit</div>
-            <div class="stat-value" id="total-limit">—</div>
-            <div class="stat-sub">combined limit</div>
+            <span class="stat-icon"><i data-lucide="circle-check-big"></i></span>
+            <div>
+                <div class="stat-label">Available now</div>
+                <div class="stat-value" id="wallet-status">0</div>
+                <div class="stat-sub">wallets ready for transfers</div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="section-header">
-        <h2>My Wallets</h2>
-    </div>
+    <section aria-labelledby="wallets-heading">
+        <div class="section-heading">
+            <div>
+                <div class="section-kicker">Your wallets</div>
+                <h2 id="wallets-heading">Accounts at a glance</h2>
+            </div>
+            <p>Open a wallet to transfer or review its activity.</p>
+        </div>
 
-    <div id="alert-dashboard" class="alert"></div>
-    <div id="wallets-loading" style="text-align:center;padding:2rem;color:var(--text-muted)">
-        <span class="spinner"></span>
-    </div>
-    <div class="wallets-grid" id="wallets-grid"></div>
-</div>
+        <div id="alert-dashboard" class="alert" role="alert"></div>
+        <div id="wallets-loading" class="table-message"><span class="spinner"></span></div>
+        <div class="wallets-grid" id="wallets-grid"></div>
+    </section>
 
-<div class="modal-overlay" id="create-wallet-modal">
+    <section class="feature-panel" id="ai-summary-panel" aria-labelledby="ai-summary-heading">
+        <div class="feature-header">
+            <div>
+                <div class="feature-kicker">FinFlow assistant</div>
+                <h2 id="ai-summary-heading">Review wallet activity</h2>
+                <p>Choose a wallet and period for a concise read-only summary.</p>
+            </div>
+            <span class="feature-status" id="ai-summary-status">Checking availability</span>
+        </div>
+        <div class="feature-controls">
+            <div class="form-group">
+                <label for="ai-summary-wallet">Wallet</label>
+                <select id="ai-summary-wallet"></select>
+            </div>
+            <div class="form-group">
+                <label for="ai-summary-from">From</label>
+                <input type="datetime-local" id="ai-summary-from"/>
+            </div>
+            <div class="form-group">
+                <label for="ai-summary-to">To</label>
+                <input type="datetime-local" id="ai-summary-to"/>
+            </div>
+            <button class="btn btn-primary" id="ai-summary-btn" type="button" onclick="generateFinancialSummary()" disabled>
+                <i data-lucide="sparkles"></i>
+                <span>Generate summary</span>
+            </button>
+        </div>
+        <div class="ai-output" id="ai-summary-output" aria-live="polite"></div>
+    </section>
+</main>
+
+<div class="modal-overlay" id="create-wallet-modal" role="dialog" aria-modal="true" aria-labelledby="create-wallet-title">
     <div class="modal">
         <div class="modal-header">
-            <h2>New Wallet</h2>
-            <button class="modal-close"
-                    onclick="document.getElementById('create-wallet-modal').classList.remove('show')">✕</button>
+            <div>
+                <div class="eyebrow">New wallet</div>
+                <h2 id="create-wallet-title">Add an account</h2>
+                <p>Set the opening balance and daily transfer limit.</p>
+            </div>
+            <button class="modal-close" type="button" onclick="document.getElementById('create-wallet-modal').classList.remove('show')" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
         </div>
 
-        <div id="create-wallet-alert" class="alert"></div>
-
+        <div id="create-wallet-alert" class="alert" role="alert"></div>
         <div class="form-group">
-            <label>Wallet Name</label>
-            <input type="text" id="wallet-name" placeholder="e.g. Savings, Primary"/>
+            <label for="wallet-name">Wallet name</label>
+            <input type="text" id="wallet-name" placeholder="Example: Primary or Savings"/>
         </div>
-
         <div class="form-group">
-            <label>Initial Balance ($)</label>
+            <label for="wallet-balance">Initial balance</label>
             <input type="number" id="wallet-balance" placeholder="0.00" min="0" step="0.01"/>
         </div>
-
         <div class="form-group">
-            <label>Daily Limit ($)</label>
-            <input type="number" id="wallet-limit" placeholder="100000.00" step="0.01"/>
+            <label for="wallet-limit">Daily transfer limit</label>
+            <input type="number" id="wallet-limit" placeholder="100000.00" min="0.01" step="0.01"/>
         </div>
-
-        <button class="btn btn-primary" onclick="createWallet()">
-            <span id="create-wallet-btn-text">Create Wallet</span>
+        <button class="btn btn-primary modal-submit" type="button" onclick="createWallet()">
+            <i data-lucide="plus"></i>
+            <span id="create-wallet-btn-text">Create wallet</span>
         </button>
     </div>
 </div>
 
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/wallet.js"></script>
 </body>
 </html>

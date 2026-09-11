@@ -28,6 +28,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -87,8 +88,17 @@ public class TransferService {
     public TransferResponse processTransfer(TransferRequest request, String username) {
         validateRequest(request);
 
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         transactionRepository.findByIdempotencyKey(request.getIdempotencyKey())
                 .ifPresent(existing -> {
+                    if (!existing.getFromWallet().getUser().getId().equals(sender.getId())) {
+                        throw new ConflictException("Idempotency key has already been used");
+                    }
+                    if (!matchesExistingTransfer(existing, request)) {
+                        throw new ConflictException("Idempotency key was reused for a different transfer");
+                    }
                     throw new IdempotencyKeyExistsException(EntityMapper.toTransferResponse(existing));
                 });
 
@@ -124,9 +134,6 @@ public class TransferService {
                 throw new WalletBusyException("Could not acquire wallet lock, please try again");
             }
 
-            User sender = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
             Long firstId = Math.min(request.getFromWalletId(), request.getToWalletId());
             Long secondId = Math.max(request.getFromWalletId(), request.getToWalletId());
 
@@ -140,6 +147,14 @@ public class TransferService {
 
             if (!fromWallet.getUser().getId().equals(sender.getId())) {
                 throw new ForbiddenOperationException("You do not own the source wallet");
+            }
+
+            if (fromWallet.getStatus() == WalletStatus.FROZEN) {
+                throw new FrozenWalletException("Source wallet is frozen: " + freezeReason(fromWallet));
+            }
+
+            if (toWallet.getStatus() == WalletStatus.FROZEN) {
+                throw new FrozenWalletException("Destination wallet is frozen: " + freezeReason(toWallet));
             }
 
             if (fromWallet.getStatus() != WalletStatus.ACTIVE || toWallet.getStatus() != WalletStatus.ACTIVE) {
@@ -208,8 +223,8 @@ public class TransferService {
                 @Override
                 public void afterCommit() {
                     transferMetrics.recordSuccess(transferAmount);
-                    fraudDetectionService.analyze(finalTransaction);
-                    notificationService.send(finalTransaction);
+                    fraudDetectionService.analyze(finalTransaction.getId());
+                    notificationService.send(finalTransaction.getId());
                 }
             });
 
@@ -273,6 +288,19 @@ public class TransferService {
                 ? walletRepository.findByIdWithPessimisticLock(walletId)
                 : walletRepository.findByIdWithOptimisticLock(walletId))
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found: " + walletId));
+    }
+
+    private boolean matchesExistingTransfer(Transaction existing, TransferRequest request) {
+        return existing.getFromWallet().getId().equals(request.getFromWalletId())
+                && existing.getToWallet().getId().equals(request.getToWalletId())
+                && existing.getAmount().compareTo(request.getAmount()) == 0
+                && Objects.equals(existing.getDescription(), request.getDescription());
+    }
+
+    private String freezeReason(Wallet wallet) {
+        return wallet.getFreezeReason() == null || wallet.getFreezeReason().isBlank()
+                ? "No reason supplied"
+                : wallet.getFreezeReason();
     }
 
     private Transaction buildTransaction(

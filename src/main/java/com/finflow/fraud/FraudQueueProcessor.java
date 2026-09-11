@@ -9,6 +9,8 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -30,13 +32,16 @@ public class FraudQueueProcessor {
 
     private final FraudAlertRepository fraudAlertRepository;
     private final TransactionRepository transactionRepository;
+    private final TransactionTemplate transactionTemplate;
     private final AtomicBoolean running = new AtomicBoolean(true);
     private Thread processorThread;
 
     public FraudQueueProcessor(FraudAlertRepository fraudAlertRepository,
-                               TransactionRepository transactionRepository) {
+                               TransactionRepository transactionRepository,
+                               PlatformTransactionManager transactionManager) {
         this.fraudAlertRepository  = fraudAlertRepository;
         this.transactionRepository = transactionRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     @PostConstruct
@@ -54,7 +59,7 @@ public class FraudQueueProcessor {
         log.info("[FRAUD QUEUE] Processor stopped");
     }
 
-    public boolean enqueue(Transaction transaction,
+    public boolean enqueue(Long transactionId,
                            int fraudScore,
                            List<FraudScoreCalculator.FraudRuleResult> results) {
         if (fraudScore < FRAUD_THRESHOLD) return false;
@@ -65,13 +70,13 @@ public class FraudQueueProcessor {
                 .collect(Collectors.joining(" | "));
 
         boolean offered = fraudQueue.offer(
-                new FraudQueueItem(transaction, fraudScore, reasons));
+                new FraudQueueItem(transactionId, fraudScore, reasons));
 
         if (offered) {
             log.warn("[FRAUD QUEUE] Enqueued txn {} | Score: {} | Reasons: {}",
-                    transaction.getId(), fraudScore, reasons);
+                    transactionId, fraudScore, reasons);
         } else {
-            log.error("[FRAUD QUEUE] Queue full — dropped txn {}", transaction.getId());
+            log.error("[FRAUD QUEUE] Queue full — dropped txn {}", transactionId);
         }
         return offered;
     }
@@ -92,40 +97,8 @@ public class FraudQueueProcessor {
 
     private void processItem(FraudQueueItem item) {
         try {
-            FraudAlert alert = new FraudAlert();
-
-            alert.setTransaction(item.transaction());
-
-            alert.setReason(item.reasons());
-
-            alert.setTriggeredRules(item.reasons());
-
-            alert.setNotes(
-                    "Fraud score " +
-                            item.fraudScore() +
-                            " triggered suspicious activity"
-            );
-
-            alert.setFraudScore(item.fraudScore());
-
-            alert.setStatus(FraudAlert.AlertStatus.PENDING);
-
-            fraudAlertRepository.save(alert);
-
-            Transaction tx = item.transaction();
-
-            tx.setFraudScore(item.fraudScore());
-
-            transactionRepository.save(tx);
-
-            log.warn(
-                    "[FRAUD QUEUE] Alert created for txn {} | Score: {}",
-                    tx.getId(),
-                    item.fraudScore()
-            );
-
+            transactionTemplate.executeWithoutResult(status -> persistItem(item));
         } catch (Exception e) {
-
             log.error(
                     "[FRAUD QUEUE] Failed to persist alert: {}",
                     e.getMessage()
@@ -133,12 +106,52 @@ public class FraudQueueProcessor {
         }
     }
 
+    private void persistItem(FraudQueueItem item) {
+        Transaction tx = transactionRepository.findById(item.transactionId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Transaction not found: " + item.transactionId()));
+
+        tx.setFraudScore(item.fraudScore());
+
+        if (fraudAlertRepository.existsByTransaction_Id(item.transactionId())) {
+            transactionRepository.save(tx);
+            return;
+        }
+
+        FraudAlert alert = new FraudAlert();
+
+        alert.setTransaction(tx);
+
+        alert.setReason(item.reasons());
+
+        alert.setTriggeredRules(item.reasons());
+
+        alert.setNotes(
+                "Fraud score " +
+                        item.fraudScore() +
+                        " triggered suspicious activity"
+        );
+
+        alert.setFraudScore(item.fraudScore());
+
+        alert.setStatus(FraudAlert.AlertStatus.PENDING);
+
+        fraudAlertRepository.save(alert);
+        transactionRepository.save(tx);
+
+        log.warn(
+                "[FRAUD QUEUE] Alert created for txn {} | Score: {}",
+                tx.getId(),
+                item.fraudScore()
+        );
+    }
+
     public int getQueueSize() {
         return fraudQueue.size();
     }
 
     public record FraudQueueItem(
-            Transaction transaction,
+            Long transactionId,
             int fraudScore,
             String reasons
     ) {}

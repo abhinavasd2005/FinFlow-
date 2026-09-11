@@ -13,10 +13,20 @@ public interface FraudAlertRepository extends JpaRepository<FraudAlert, Long> {
 
     List<FraudAlert> findByTransactionId(Long transactionId);
 
+    boolean existsByTransaction_Id(Long transactionId);
+
+    @Query("SELECT f FROM FraudAlert f JOIN FETCH f.transaction ORDER BY f.createdAt DESC")
+    List<FraudAlert> findAllWithTransaction();
+
     @Query("SELECT f FROM FraudAlert f WHERE " +
             "f.transaction.fromWallet.id = :walletId " +
             "ORDER BY f.createdAt DESC")
     List<FraudAlert> findByWalletId(@Param("walletId") Long walletId);
+
+    @Query("SELECT f FROM FraudAlert f JOIN FETCH f.transaction " +
+            "WHERE f.transaction.fromWallet.id = :walletId " +
+            "ORDER BY f.createdAt DESC")
+    List<FraudAlert> findByWalletIdWithTransaction(@Param("walletId") Long walletId);
 
     @Query("SELECT COUNT(f) FROM FraudAlert f WHERE " +
             "f.transaction.fromWallet.id = :walletId AND " +

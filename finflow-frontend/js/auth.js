@@ -1,4 +1,4 @@
-const API_BASE = 'https://finflow-backendapp.onrender.com/api';
+const API_BASE = window.FINFLOW_API_BASE;
 
 const currentPage =
     window.location.pathname
@@ -25,12 +25,12 @@ function switchTab(tab) {
 
     document.querySelectorAll('.tab-btn')
         .forEach((b, i) => {
-
-            b.classList.toggle(
-                'active',
+            const isActive =
                 (tab === 'login' && i === 0) ||
-                (tab === 'register' && i === 1)
-            );
+                (tab === 'register' && i === 1);
+
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-selected', String(isActive));
         });
 
     document.getElementById('login-form')
@@ -144,8 +144,8 @@ async function handleLogin() {
 
             showAlert(
                 'login-alert',
-                data.error ||
                 data.message ||
+                data.error ||
                 'Invalid credentials'
             );
 
@@ -189,7 +189,7 @@ async function handleLogin() {
 
     } finally {
 
-        btn.textContent = 'Sign In';
+        btn.textContent = 'Sign in';
     }
 }
 
@@ -203,6 +203,11 @@ async function handleRegister() {
     const email =
         document.getElementById(
             'reg-email'
+        ).value.trim();
+
+    const phoneNumber =
+        document.getElementById(
+            'reg-phone'
         ).value.trim();
 
     const password =
@@ -256,6 +261,7 @@ async function handleRegister() {
                     body: JSON.stringify({
                         username,
                         email,
+                        phoneNumber,
                         password
                     })
                 }
@@ -268,8 +274,8 @@ async function handleRegister() {
 
             showAlert(
                 'register-alert',
-                data.error ||
                 data.message ||
+                data.error ||
                 'Registration failed'
             );
 
@@ -314,7 +320,7 @@ async function handleRegister() {
     } finally {
 
         btn.textContent =
-            'Create Account';
+            'Create account';
     }
 }
 

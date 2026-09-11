@@ -58,7 +58,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             SELECT COALESCE(AVG(t.amount), 0)
             FROM Transaction t
             WHERE t.fromWallet.id = :walletId
+              AND t.id < :transactionId
               AND t.status = com.finflow.enums.TransactionStatus.COMPLETED
             """)
-    BigDecimal avgTransactionAmount(@Param("walletId") Long walletId);
+    BigDecimal avgTransactionAmountBeforeTransaction(
+            @Param("walletId") Long walletId,
+            @Param("transactionId") Long transactionId
+    );
 }

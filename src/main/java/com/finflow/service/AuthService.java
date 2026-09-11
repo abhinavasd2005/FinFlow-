@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finflow.enums.Role;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Service
 public class AuthService {
@@ -50,18 +51,21 @@ public class AuthService {
             RegisterRequest request,
             Role role
     ) {
+        String username = normalizeUsername(request.getUsername());
+        String email = normalizeEmail(request.getEmail());
 
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (userRepository.existsByUsername(username)) {
             throw new ConflictException("Username already exists");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(email)) {
             throw new ConflictException("Email already exists");
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPhoneNumber(normalizePhoneNumber(request.getPhoneNumber()));
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(role);
         user.setCreatedAt(LocalDateTime.now());
@@ -79,17 +83,30 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String username = normalizeUsername(request.getUsername());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        username,
                         request.getPassword()
                 )
         );
 
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AuthenticationFailedException("Invalid credentials"));
 
         String token = jwtUtil.generateToken(user.getUsername());
         return new AuthResponse(token, EntityMapper.toUserResponse(user));
+    }
+
+    private String normalizeUsername(String username) {
+        return username.trim();
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizePhoneNumber(String phoneNumber) {
+        return phoneNumber == null || phoneNumber.isBlank() ? null : phoneNumber.trim();
     }
 }

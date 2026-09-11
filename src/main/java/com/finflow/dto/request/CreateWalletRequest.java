@@ -1,6 +1,7 @@
 package com.finflow.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -14,9 +15,11 @@ public class CreateWalletRequest {
     private String walletName;
 
     @PositiveOrZero
+    @Digits(integer = 17, fraction = 2)
     private BigDecimal initialBalance;
 
     @Positive
+    @Digits(integer = 17, fraction = 2)
     private BigDecimal dailyLimit;
 
     public String getWalletName() {

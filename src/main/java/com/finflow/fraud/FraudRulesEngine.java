@@ -45,7 +45,9 @@ public class FraudRulesEngine {
         String rule = "LARGE_AMOUNT";
         try {
             BigDecimal avg = transactionRepository
-                    .avgTransactionAmount(transaction.getFromWallet().getId());
+                    .avgTransactionAmountBeforeTransaction(
+                            transaction.getFromWallet().getId(),
+                            transaction.getId());
 
             if (avg.compareTo(BigDecimal.ZERO) == 0) {
                 return new FraudRuleResult(rule, false, 0, "No prior transactions");

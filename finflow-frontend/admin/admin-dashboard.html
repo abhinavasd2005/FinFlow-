@@ -2,196 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0"/>
-
-    <title>FinFlow Admin Dashboard</title>
-
-    <link rel="stylesheet"
-          href="../css/style.css"/>
-
-    <style>
-
-        .admin-grid {
-            display:grid;
-            grid-template-columns:
-                repeat(auto-fit,minmax(220px,1fr));
-            gap:1rem;
-            margin-bottom:2rem;
-        }
-
-        .admin-card {
-            background:var(--bg-card);
-            border:1px solid var(--border);
-            border-radius:var(--radius);
-            padding:1.5rem;
-        }
-
-        .admin-number {
-            font-size:2rem;
-            font-weight:700;
-            margin-top:0.5rem;
-        }
-
-    </style>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FinFlow - Admin overview</title>
+    <link rel="stylesheet" href="../css/style.css"/>
 </head>
-
-<body>
-
-<nav class="navbar">
-
+<body data-page="admin-dashboard">
+<nav class="navbar" aria-label="Admin navigation">
     <div class="container navbar-inner">
-
-        <a href="#"
-           class="navbar-brand">
-
-            Fin<span>Flow</span>
-
-            <span class="badge badge-warning"
-                  style="margin-left:0.5rem">
-                ADMIN
-            </span>
-
+        <a href="admin-dashboard.html" class="navbar-brand" aria-label="FinFlow admin dashboard">
+            <span class="brand-mark"><i data-lucide="waypoints"></i></span>
+            Fin<span>Flow</span><span class="badge admin-badge">Admin</span>
         </a>
-
-        <div class="navbar-user">
-
-            <span class="navbar-username"
-                  id="nav-username">
-            </span>
-
-            <a href="admin-fraud.html"
-               class="btn btn-secondary btn-sm">
-                Fraud Monitor
-            </a>
-
-            <button class="btn btn-danger btn-sm"
-                    onclick="logout()">
-                Logout
-            </button>
-
+        <div class="nav-links">
+            <a class="nav-link" data-nav="admin-dashboard" href="admin-dashboard.html"><i data-lucide="chart-no-axes-combined"></i><span>Overview</span></a>
+            <a class="nav-link" data-nav="admin-fraud" href="admin-fraud.html"><i data-lucide="shield-alert"></i><span>Fraud review</span></a>
         </div>
-
+        <div class="navbar-user">
+            <div class="user-chip">
+                <span class="user-avatar" data-user-initial></span>
+                <span class="navbar-username" id="nav-username"></span>
+            </div>
+            <button class="btn btn-danger btn-sm btn-icon" type="button" onclick="logout()" title="Log out" aria-label="Log out"><i data-lucide="log-out"></i></button>
+        </div>
     </div>
-
 </nav>
 
-<div class="container">
-
-    <div class="dashboard-header">
-
-        <div>
-
-            <h1>Admin Dashboard</h1>
-
-            <p>
-                Internal monitoring and system analytics
-            </p>
-
+<main class="container app-main">
+    <header class="page-header">
+        <div class="page-heading">
+            <div class="eyebrow">Operations</div>
+            <h1>Fraud operations</h1>
+            <p>Live view of alerts, review workload, and elevated-risk activity.</p>
         </div>
+        <a href="admin-fraud.html" class="btn btn-primary"><i data-lucide="shield-alert"></i><span>Review alerts</span></a>
+    </header>
 
-    </div>
+    <div id="admin-notice" class="admin-notice" role="alert" aria-live="polite"></div>
 
-    <div class="admin-grid">
-
+    <section class="admin-grid" aria-label="Fraud monitoring totals">
         <div class="admin-card">
-
-            <div class="stat-label">
-                Total Alerts
-            </div>
-
-            <div class="admin-number"
-                 id="total-alerts">
-                —
-            </div>
-
+            <span class="stat-icon"><i data-lucide="bell-ring"></i></span>
+            <div class="stat-label">Total alerts</div>
+            <div class="admin-number" id="total-alerts">0</div>
         </div>
-
         <div class="admin-card">
-
-            <div class="stat-label">
-                Pending Alerts
-            </div>
-
-            <div class="admin-number"
-                 id="pending-alerts">
-                —
-            </div>
-
+            <span class="stat-icon"><i data-lucide="clock-3"></i></span>
+            <div class="stat-label">Pending review</div>
+            <div class="admin-number" id="pending-alerts">0</div>
         </div>
-
         <div class="admin-card">
-
-            <div class="stat-label">
-                High Risk
-            </div>
-
-            <div class="admin-number"
-                 id="high-risk">
-                —
-            </div>
-
+            <span class="stat-icon"><i data-lucide="triangle-alert"></i></span>
+            <div class="stat-label">High risk</div>
+            <div class="admin-number" id="high-risk">0</div>
         </div>
-
         <div class="admin-card">
-
-            <div class="stat-label">
-                Queue Size
-            </div>
-
-            <div class="admin-number"
-                 id="queue-size">
-                —
-            </div>
-
+            <span class="stat-icon"><i data-lucide="list-ordered"></i></span>
+            <div class="stat-label">Queue size</div>
+            <div class="admin-number" id="queue-size">0</div>
         </div>
+    </section>
 
-    </div>
-
-    <div style="
-        background:var(--bg-card);
-        border:1px solid var(--border);
-        border-radius:var(--radius);
-        padding:1.5rem;
-    ">
-
-        <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:1rem;
-        ">
-
-            <h2>Recent Fraud Alerts</h2>
-
-            <a href="admin-fraud.html"
-               class="btn btn-secondary btn-sm">
-                View All
-            </a>
-
-        </div>
-
-        <div id="alerts-container">
-
-            <div style="
-                text-align:center;
-                color:var(--text-muted);
-                padding:2rem;
-            ">
-
-                <span class="spinner"></span>
-
+    <section class="admin-panel" aria-labelledby="recent-alerts-heading">
+        <div class="admin-panel-header">
+            <div>
+                <div class="eyebrow">Latest signals</div>
+                <h2 id="recent-alerts-heading">Recent fraud alerts</h2>
             </div>
-
+            <a href="admin-fraud.html" class="btn btn-secondary btn-sm"><i data-lucide="arrow-up-right"></i><span>All alerts</span></a>
         </div>
+        <div id="alerts-container"><div class="table-message"><span class="spinner"></span></div></div>
+    </section>
+</main>
 
-    </div>
-
-</div>
-
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="../js/config.js"></script>
+<script src="../js/ui.js"></script>
 <script src="../js/admin.js"></script>
-
 </body>
 </html>

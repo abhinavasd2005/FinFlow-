@@ -392,6 +392,19 @@ spring.datasource.url=jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}
 spring.datasource.username=${MYSQLUSER}
 spring.datasource.password=${MYSQLPASSWORD}
 jwt.secret=${JWT_SECRET}
+admin.registration-secret=${ADMIN_REGISTRATION_SECRET}
+
+# Optional real notifications
+notification.twilio.account-sid=${TWILIO_ACCOUNT_SID}
+notification.twilio.auth-token=${TWILIO_AUTH_TOKEN}
+notification.twilio.from=${TWILIO_FROM}
+notification.twilio.messaging-service-sid=${TWILIO_MESSAGING_SERVICE_SID}
+notification.resend.api-key=${RESEND_API_KEY}
+notification.resend.from=${RESEND_FROM}
+
+# Optional Gemini AI assistant
+ai.gemini.api-key=${GEMINI_API_KEY}
+ai.gemini.model=${GEMINI_MODEL:gemini-2.5-flash}
 ```
 
 The application follows several *12-Factor App principles* — 
@@ -458,6 +471,15 @@ PATCH /api/fraud/alerts/{id}/dismiss       Dismiss alert
 POST  /api/fraud/freeze/{walletId}         Freeze a wallet
 POST  /api/fraud/unfreeze/{walletId}       Unfreeze a wallet
 ```
+
+### AI assistant (authenticated)
+```
+GET  /api/ai/status                 Check whether optional AI features are configured
+POST /api/ai/transfer-draft         Turn a natural-language request into a reviewable draft
+POST /api/ai/financial-summary      Summarize an owned wallet's transactions for a date range
+```
+
+AI never executes a transfer. It only fills a draft that the user must review and submit through the normal transfer endpoint.
 
 ---
 
@@ -560,11 +582,12 @@ spring.datasource.url=jdbc:mysql://localhost:3306/finflow
 spring.datasource.username=your_username
 spring.datasource.password=your_password
 jwt.secret=any_long_secret_key_here
-server.port=8080
+server.port=10000
+# Optional: ADMIN_REGISTRATION_SECRET, TWILIO_*, RESEND_*, GEMINI_API_KEY
 
 # 4. Run the application
 mvn spring-boot:run
-# Server starts at http://localhost:8080
+# Server starts at http://localhost:10000
 # Hibernate auto-creates all tables on first run
 ```
 
@@ -593,7 +616,8 @@ docker run -p 8080:8080 \
 # Or use VS Code Live Server extension
 open finflow-frontend/index.html
 
-# For production — change API_BASE in all JS files to your backend URL
+# The frontend automatically targets http://localhost:10000/api when opened locally.
+# js/config.js retains the hosted API as a fallback for non-local browsing.
 ```
 
 ---
@@ -601,7 +625,7 @@ open finflow-frontend/index.html
 ### Create Admin Account
 
 ```bash
-curl -X POST "http://localhost:8080/api/auth/register/admin?adminSecret=finflow-admin-secret" \
+curl -X POST "http://localhost:10000/api/auth/register/admin?adminSecret=YOUR_ADMIN_REGISTRATION_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","email":"admin@finflow.com","password":"admin123"}'
 ```
@@ -609,7 +633,7 @@ curl -X POST "http://localhost:8080/api/auth/register/admin?adminSecret=finflow-
 ## Future Improvements
 
 - **Kafka integration** — publish transaction events to a Kafka topic for downstream ETL pipeline and analytics warehouse
-- **Notification service** — email/SMS alerts via SMTP or third-party provider
+- **Notification delivery improvements** — retries, provider webhooks, and an admin delivery monitor
 - **Refresh tokens** — sliding JWT sessions instead of hard 1hr expiry
 - **Data warehouse layer** — ETL/ELT pipeline into DuckDB for analytics (planned as separate project)
 

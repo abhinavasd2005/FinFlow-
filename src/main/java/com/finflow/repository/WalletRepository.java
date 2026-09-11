@@ -14,6 +14,8 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     List<Wallet> findByUserUsername(String username);
 
+    List<Wallet> findByStatus(com.finflow.enums.WalletStatus status);
+
     Optional<Wallet> findByWalletNumber(String walletNumber);
 
     boolean existsByWalletNumber(String walletNumber);

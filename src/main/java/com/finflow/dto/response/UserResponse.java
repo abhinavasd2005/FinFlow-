@@ -7,16 +7,18 @@ public class UserResponse {
     private Long id;
     private String username;
     private String email;
+    private String phoneNumber;
     private LocalDateTime createdAt;
     private String role;
 
     public UserResponse() {
     }
 
-    public UserResponse(Long id, String username, String email, LocalDateTime createdAt,String role) {
+    public UserResponse(Long id, String username, String email, String phoneNumber, LocalDateTime createdAt,String role) {
         this.id = id;
         this.username = username;
         this.email = email;
+        this.phoneNumber = phoneNumber;
         this.createdAt = createdAt;
         this.role = role;
     }
@@ -50,6 +52,14 @@ public class UserResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public LocalDateTime getCreatedAt() {

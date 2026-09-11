@@ -23,6 +23,7 @@ public final class EntityMapper {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getPhoneNumber(),
                 user.getCreatedAt(),
                 user.getRole().name()
         );
@@ -40,6 +41,8 @@ public final class EntityMapper {
                 wallet.getBalance(),
                 wallet.getDailyLimit(),
                 wallet.getStatus(),
+                wallet.getFreezeReason(),
+                wallet.getFrozenAt(),
                 wallet.getCreatedAt()
         );
     }
